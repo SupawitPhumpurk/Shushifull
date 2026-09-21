@@ -17,51 +17,7 @@
             height: 100vh;
         }
 
-        /* --- เมนูตัวเลือกเมื่อคลิกป้ายหน้าร้าน --- */
-        #pickMenu {
-            display: none;
-            position: fixed;
-            bottom: 40px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(20,20,20,0.9);
-            border: 1px solid rgba(255,255,255,0.15);
-            border-radius: 14px;
-            padding: 18px 22px;
-            color: #fff;
-            z-index: 20;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.4);
-            min-width: 260px;
-        }
-        #pickMenu h3 {
-            margin: 0 0 12px 0;
-            font-size: 15px;
-            font-weight: 600;
-            opacity: 0.85;
-        }
-        #pickMenu button {
-            display: block;
-            width: 100%;
-            text-align: left;
-            margin-bottom: 8px;
-            padding: 10px 14px;
-            border: none;
-            border-radius: 8px;
-            background: #2b2b2b;
-            color: #fff;
-            font-size: 14px;
-            cursor: pointer;
-            transition: background 0.15s;
-        }
-        #pickMenu button:hover { background: #e63946; }
-        #pickMenu .closeBtn {
-            background: transparent;
-            text-align: center;
-            opacity: 0.6;
-            margin-top: 4px;
-        }
-
-        /* --- แผงข้อมูล (portfolio / about us) --- */
+        /* --- แผงข้อมูล (menu / about me / photo) --- */
         #infoPanel {
             display: none;
             position: fixed;
@@ -113,23 +69,31 @@
             font-size: 13px;
             z-index: 5;
             pointer-events: none;
+            text-align: center;
+        }
+
+        /* --- กล่อง debug: โชว์ชื่อ object ที่คลิกล่าสุด --- */
+        #debugBox {
+            position: fixed;
+            top: 14px;
+            right: 14px;
+            background: rgba(0,0,0,0.6);
+            color: #0f0;
+            font-family: monospace;
+            font-size: 13px;
+            padding: 8px 12px;
+            border-radius: 8px;
+            z-index: 30;
+            display: none;
         }
     </style>
 </head>
 <body>
 
-    <div id="hint">คลิกที่ป้ายหน้าร้านเพื่อดูเมนู</div>
+    <div id="hint">คลิกปุ่ม Menu / About Me / Photo บนผนังร้านเพื่อดูข้อมูล</div>
+    <div id="debugBox"></div>
 
-    <!-- เมนู 3 ทางเลือก เมื่อคลิกป้ายหน้าร้าน (Plane.017) -->
-    <div id="pickMenu">
-        <h3>เลือกดูข้อมูล</h3>
-        <button id="btnMenu">1. เมนูร้าน</button>
-        <button id="btnPortfolio">2. ข้อมูล Portfolio</button>
-        <button id="btnAbout">3. About Us</button>
-        <button class="closeBtn" id="btnMenuClose">ปิด</button>
-    </div>
-
-    <!-- แผงข้อมูล portfolio / about us -->
+    <!-- แผงข้อมูล menu / about me / photo -->
     <div id="infoPanel">
         <div id="infoPanelContent"></div>
         <button id="btnInfoClose">← กลับ</button>
@@ -146,7 +110,7 @@
            ตั้งค่า / ข้อมูล
            ============================================================ */
 
-        const CURTAIN_OBJECT_NAMES = [ "Plane.011" ];
+        const CURTAIN_OBJECT_NAMES = [ "Plane011" ];
 
         // ข้อมูล portfolio ของเจ้าของ
         const portfolioData = {
@@ -210,10 +174,16 @@
            ตัวแปรเก็บ object สำคัญ + สถานะกล้อง
            ============================================================ */
         let modelRoot = null;
-        let signObject = null;      // Plane.017 - ป้ายหน้าร้าน
-        let menuObject = null;      // Plane.016 - เมนูร้าน
-        let portfolioObject = null; // Plane.012 - ทีวี portfolio
-        let aboutObject = null;     // Plane.021 - about us
+
+        // ปุ่มที่คลิกได้ (สร้างใหม่โดยผู้ใช้)
+        let menuButtonObj = null;   // Plane025 - ปุ่ม Menu
+        let aboutButtonObj = null;  // Plane026 - ปุ่ม About me
+        let photoButtonObj = null;  // Plane027 - ปุ่ม Photo
+
+        // object เป้าหมายที่กล้องจะซูมไปหา / โชว์ข้อมูลประกอบ
+        let menuTargetObj = null;   // Plane016 - หน้าเมนู
+        let aboutTargetObj = null;  // Plane017 - ป้ายหน้าร้าน (ข้อมูลส่วนตัว/portfolio)
+        let photoTargetObj = null;  // Plane024 - มีรูปหน้าผมอยู่
 
         let defaultCamPos = new THREE.Vector3();
         let defaultCamTarget = new THREE.Vector3();
@@ -237,9 +207,13 @@
             // --- [หมุนโมเดลให้หน้าร้านหันเข้าหากล้อง] ---
             model.rotation.y = -Math.PI / 2;
 
+            // --- Debug: log รายชื่อ mesh ทั้งหมดในโมเดล (เปิด Console ดูได้ F12) ---
+            const allMeshNames = [];
+
             // --- ไล่ดูทุก mesh ในโมเดล เพื่อสลับวัสดุ / เก็บ reference / ผูก shader ---
             model.traverse((node) => {
                 if (!node.isMesh) return;
+                allMeshNames.push(node.name);
 
                 const originalMap = node.material ? node.material.map : null;
                 const originalColor = node.material && node.material.color
@@ -265,11 +239,15 @@
                     });
                 }
 
-                // --- เก็บ reference object สำหรับ picking menu ---
-                if (node.name === 'Plane.017') signObject = node;
-                if (node.name === 'Plane.016') menuObject = node;
-                if (node.name === 'Plane.012') portfolioObject = node;
-                if (node.name === 'Plane.021') aboutObject = node;
+                // --- เก็บ reference object สำหรับปุ่มคลิก ---
+                if (node.name === 'Plane025') menuButtonObj = node;
+                if (node.name === 'Plane026') aboutButtonObj = node;
+                if (node.name === 'Plane027') photoButtonObj = node;
+
+                // --- เก็บ reference object เป้าหมายที่กล้องจะซูมไป ---
+                if (node.name === 'Plane016') menuTargetObj = node;
+                if (node.name === 'Plane017') aboutTargetObj = node;
+                if (node.name === 'Plane024') photoTargetObj = node;
 
                 // --- Vertex Shader: คลื่นไหวบนผ้าม่านสีแดง ---
                 if (CURTAIN_OBJECT_NAMES.includes(node.name)) {
@@ -283,7 +261,6 @@
                             float waveStrength = 0.04;
                             float waveSpeed = 2.0;
                             float waveFreq = 6.0;
-                            // ยิ่งอยู่ด้านล่าง (y ต่ำ) ยิ่งไหวมาก, ด้านบน (ติดคาน) แทบไม่ขยับ
                             float hangFactor = clamp(1.0 - (position.y + 1.0), 0.0, 1.0);
                             transformed.x += sin(position.y * waveFreq + uTime * waveSpeed) * waveStrength * hangFactor;
                             transformed.z += cos(position.y * waveFreq * 0.7 + uTime * waveSpeed) * waveStrength * 0.5 * hangFactor;
@@ -317,12 +294,25 @@
             defaultCamTarget.copy(controls.target);
 
             scene.add(model);
+
+            // --- Debug: แสดงรายชื่อ mesh ทั้งหมด + เช็คว่าหา object สำคัญเจอไหม ---
+            console.log('รายชื่อ mesh ทั้งหมดในโมเดล:', allMeshNames);
+            console.log('menuButtonObj (Plane025):', menuButtonObj ? menuButtonObj.name : '❌ ไม่เจอ');
+            console.log('aboutButtonObj (Plane026):', aboutButtonObj ? aboutButtonObj.name : '❌ ไม่เจอ');
+            console.log('photoButtonObj (Plane027):', photoButtonObj ? photoButtonObj.name : '❌ ไม่เจอ');
+            console.log('menuTargetObj (Plane016):', menuTargetObj ? menuTargetObj.name : '❌ ไม่เจอ');
+            console.log('aboutTargetObj (Plane017):', aboutTargetObj ? aboutTargetObj.name : '❌ ไม่เจอ');
+            console.log('photoTargetObj (Plane024):', photoTargetObj ? photoTargetObj.name : '❌ ไม่เจอ');
+            if (!menuButtonObj || !aboutButtonObj || !photoButtonObj) {
+                document.getElementById('hint').innerText =
+                    'บางปุ่มยังไม่เจอ object ในโมเดล — เปิด Console (F12) ดูรายชื่อทั้งหมด';
+            }
         }, undefined, (error) => {
             console.error('เกิดข้อผิดพลาดในการโหลดโมเดล:', error);
         });
 
         /* ============================================================
-           3. Picking (Raycaster) - คลิกวัตถุในฉาก
+           3. Picking (Raycaster) - คลิกปุ่มในฉาก
            ============================================================ */
         const raycaster = new THREE.Raycaster();
         const mouse = new THREE.Vector2();
@@ -336,11 +326,21 @@
             raycaster.setFromCamera(mouse, camera);
             const intersects = raycaster.intersectObject(modelRoot, true);
 
-            if (intersects.length > 0) {
-                const hit = intersects[0].object;
-                if (hit === signObject) {
-                    openPickMenu();
-                }
+            if (intersects.length === 0) return;
+            const hit = intersects[0].object;
+
+            // --- Debug: โชว์ชื่อ object ที่คลิกล่าสุด มุมขวาบน ---
+            const debugBox = document.getElementById('debugBox');
+            debugBox.style.display = 'block';
+            debugBox.innerText = 'คลิกโดน: ' + hit.name;
+            console.log('คลิกโดน object ชื่อ:', hit.name);
+
+            if (hit === menuButtonObj) {
+                showMenu();
+            } else if (hit === aboutButtonObj) {
+                showAboutMe();
+            } else if (hit === photoButtonObj) {
+                showPhoto();
             }
         });
 
@@ -350,12 +350,12 @@
         let flyAnim = null;
 
         function focusOnObject(obj, distanceMultiplier = 2.2) {
+            if (!obj) return;
             const box = new THREE.Box3().setFromObject(obj);
             const center = box.getCenter(new THREE.Vector3());
             const size = box.getSize(new THREE.Vector3());
             const maxDim = Math.max(size.x, size.y, size.z, 0.2);
 
-            // ทิศทางเดิมของกล้อง (มองจากตำแหน่งปัจจุบันเข้าหาวัตถุ)
             const dir = new THREE.Vector3().subVectors(camera.position, controls.target).normalize();
             const targetCamPos = center.clone().add(dir.multiplyScalar(maxDim * distanceMultiplier));
 
@@ -373,7 +373,7 @@
 
             function step(now) {
                 const t = Math.min((now - startTime) / duration, 1);
-                const ease = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2; // easeInOutQuad
+                const ease = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
 
                 camera.position.lerpVectors(startPos, targetPos, ease);
                 controls.target.lerpVectors(startTarget, targetLook, ease);
@@ -393,37 +393,27 @@
         }
 
         /* ============================================================
-           5. เมนู & แผงข้อมูล (UI)
+           5. แผงข้อมูล (UI)
            ============================================================ */
-        const pickMenuEl = document.getElementById('pickMenu');
         const infoPanelEl = document.getElementById('infoPanel');
         const infoPanelContentEl = document.getElementById('infoPanelContent');
         const hintEl = document.getElementById('hint');
 
-        function openPickMenu() {
-            pickMenuEl.style.display = 'block';
-            hintEl.style.display = 'none';
-        }
-        function closePickMenu() {
-            pickMenuEl.style.display = 'none';
-        }
         function openInfoPanel(html) {
             infoPanelContentEl.innerHTML = html;
             infoPanelEl.style.display = 'block';
+            hintEl.style.display = 'none';
         }
         function closeInfoPanel() {
             infoPanelEl.style.display = 'none';
             resetCamera();
             hintEl.style.display = 'block';
         }
-
-        document.getElementById('btnMenuClose').onclick = closePickMenu;
         document.getElementById('btnInfoClose').onclick = closeInfoPanel;
 
-        // 1. เมนูร้าน
-        document.getElementById('btnMenu').onclick = () => {
-            closePickMenu();
-            if (menuObject) focusOnObject(menuObject, 1.6);
+        // ปุ่ม 1: Menu
+        function showMenu() {
+            focusOnObject(menuTargetObj, 1.6);
             openInfoPanel(`
                 <h2>เมนูร้าน SHUSHIDAI</h2>
                 <p>-Sake shushi</p>
@@ -433,35 +423,29 @@
                 <p>-Hotate shushi</p>
                 <p>-Maguro shushi</p>
             `);
-        };
+        }
 
-        // 2. ข้อมูล Portfolio
-        document.getElementById('btnPortfolio').onclick = () => {
-            closePickMenu();
-            if (portfolioObject) focusOnObject(portfolioObject, 2.0);
+        // ปุ่ม 2: About me (ข้อมูลส่วนตัว / portfolio)
+        function showAboutMe() {
+            focusOnObject(aboutTargetObj, 2.0);
             openInfoPanel(`
-                <h2>Portfolio</h2>
+                <h2>About Me</h2>
                 <p><span class="label">ชื่อ-สกุล</span><br>${portfolioData.name}</p>
                 <p><span class="label">รหัสนักศึกษา</span><br>${portfolioData.studentId}</p>
                 <p><span class="label">สาขา</span><br>${portfolioData.major}</p>
                 <p><span class="label">คณะ</span><br>${portfolioData.faculty}</p>
                 <p style="margin-top:10px; opacity:0.7; font-style:italic;">${portfolioData.bio}</p>
             `);
-        };
+        }
 
-        // 3. About Us
-        document.getElementById('btnAbout').onclick = () => {
-            closePickMenu();
-            if (aboutObject) focusOnObject(aboutObject, 2.0);
+        // ปุ่ม 3: Photo
+        function showPhoto() {
+            focusOnObject(photoTargetObj, 1.4);
             openInfoPanel(`
-                <h2>About Us</h2>
-                <p>SHUSHIDAI คือร้านซูชิขนาดเล็ก จำลองขึ้นเป็นแบบจำลอง 3 มิติเพื่อการศึกษา
-                ในรายวิชา Interactive 3D Portfolio</p>
-                <p style="margin-top:8px; opacity:0.7; font-style:italic;">
-                (เนื้อหาเพิ่มเติมสามารถแก้ไขได้ในภายหลัง)
-                </p>
+                <h2>Photo</h2>
+                <p>รูปถ่ายตัวเอง (แสดงบนโมเดล 3D ที่กล้องกำลังซูมอยู่)</p>
             `);
-        };
+        }
 
         /* ============================================================
            6. Loop Render
