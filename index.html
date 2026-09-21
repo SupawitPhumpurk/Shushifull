@@ -58,19 +58,23 @@
         dracoLoader.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.6/');
         loader.setDRACOLoader(dracoLoader);
 
-        loader.load('https://supawitphumpurk.github.io/Shushi/Shushi.glb', (gltf) => {
-            const model = gltf.scene;
+        const modelUrl = 'https://supawitphumpurk.github.io/Shushifull/Shushi.glb?v=' + Date.now();
 
-            // ===== แทรกตรงนี้ =====
-            model.traverse((child) => {
-                if (child.isMesh && child.material) {
-                    if (child.material.map) {
-                        child.material.map.flipY = false;
-                        child.material.map.needsUpdate = true;
-                    }
-                    child.material.needsUpdate = true;
-                }
-            });
+loader.load(modelUrl, (gltf) => {
+    const model = gltf.scene;
+
+    // แก้ไขพิกัดรูปถ่ายและตั้งค่าแสดงผลแบบ 2 ด้าน
+    model.traverse((child) => {
+        if (child.isMesh && child.material) {
+            child.material.side = THREE.DoubleSide;
+
+            if (child.material.map) {
+                child.material.map.flipY = false;
+                child.material.map.needsUpdate = true;
+            }
+            child.material.needsUpdate = true;
+        }
+    });
             // ======================
 
             // --- [หมุนโมเดลไปทางซ้าย 90 องศา] ---
