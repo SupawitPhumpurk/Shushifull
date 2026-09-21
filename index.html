@@ -61,6 +61,18 @@
         loader.load('https://supawitphumpurk.github.io/Shushi/Shushi.glb', (gltf) => {
             const model = gltf.scene;
 
+            // ===== แทรกตรงนี้ =====
+            model.traverse((child) => {
+                if (child.isMesh && child.material) {
+                    if (child.material.map) {
+                        child.material.map.flipY = false;
+                        child.material.map.needsUpdate = true;
+                    }
+                    child.material.needsUpdate = true;
+                }
+            });
+            // ======================
+
             // --- [หมุนโมเดลไปทางซ้าย 90 องศา] ---
             model.rotation.y = -Math.PI / 2;
 
