@@ -52,6 +52,26 @@
         directionalLight.position.set(0, 10, 10);
         scene.add(directionalLight);
 
+        // --- สร้าง gradient map แบบ 4 สเต็ปสำหรับ Cel Shading ---
+        function createToonGradientTexture() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 4;
+            canvas.height = 1;
+            const ctx = canvas.getContext('2d');
+            // ไล่เฉดจากมืดไปสว่าง 4 ระดับ (ปรับได้ตามชอบ)
+            const shades = [80, 140, 190, 255];
+            shades.forEach((v, i) => {
+                ctx.fillStyle = `rgb(${v},${v},${v})`;
+                ctx.fillRect(i, 0, 1, 1);
+            });
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.minFilter = THREE.NearestFilter;
+            texture.magFilter = THREE.NearestFilter;
+            texture.generateMipmaps = false;
+            return texture;
+        }
+        const toonGradientMap = createToonGradientTexture();
+
         // 3. โหลดโมเดล Shushi.glb
         const loader = new THREE.GLTFLoader();
         const dracoLoader = new THREE.DRACOLoader();
@@ -63,6 +83,35 @@
 
             // --- [หมุนโมเดลให้หน้าร้านหันเข้าหากล้อง] ---
             model.rotation.y = -Math.PI / 2;
+
+            // --- ไล่ดูทุก mesh ในโมเดล เพื่อสลับวัสดุเฉพาะจุด ---
+            model.traverse((node) => {
+                if (!node.isMesh) return;
+
+                const originalMap = node.material ? node.material.map : null;
+                const originalColor = node.material && node.material.color
+                    ? node.material.color.clone()
+                    : new THREE.Color(0xffffff);
+
+                if (node.name.startsWith('Cylinder')) {
+                    // --- PBR material ---
+                    node.material = new THREE.MeshStandardMaterial({
+                        map: originalMap,
+                        color: originalColor,
+                        metalness: 0.85,   // ปรับได้: 0 = ไม่ใช่โลหะ, 1 = โลหะเต็ม
+                        roughness: 0.25,   // ปรับได้: 0 = เงามาก, 1 = ด้าน
+                    });
+                }
+
+                if (node.name.startsWith('Icosphere')) {
+                    // --- Cel Shading material ---
+                    node.material = new THREE.MeshToonMaterial({
+                        map: originalMap,
+                        color: originalColor,
+                        gradientMap: toonGradientMap,
+                    });
+                }
+            });
 
             // คำนวณขนาดและจุดศูนย์กลางหลังจากหมุน
             const box = new THREE.Box3().setFromObject(model);
