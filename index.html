@@ -15,45 +15,9 @@
             width: 100vw; 
             height: 100vh; 
         }
-        #controls {
-            position: fixed;
-            top: 12px;
-            left: 12px;
-            z-index: 10;
-            background: rgba(0,0,0,0.55);
-            color: #fff;
-            font-family: sans-serif;
-            font-size: 14px;
-            padding: 10px 14px;
-            border-radius: 8px;
-            line-height: 1.6;
-        }
-        #controls button {
-            margin: 2px 4px 2px 0;
-            padding: 4px 10px;
-            border: none;
-            border-radius: 4px;
-            background: #333;
-            color: #fff;
-            cursor: pointer;
-        }
-        #controls button:hover { background: #555; }
     </style>
 </head>
 <body>
-
-    <div id="controls">
-        มุมหมุนปัจจุบัน: <span id="angleLabel">0</span>°<br>
-        <button onclick="rotateModel(-15)">⟲ หมุนซ้าย 15°</button>
-        <button onclick="rotateModel(15)">⟳ หมุนขวา 15°</button><br>
-        <button onclick="setRotation(0)">0°</button>
-        <button onclick="setRotation(90)">90°</button>
-        <button onclick="setRotation(180)">180°</button>
-        <button onclick="setRotation(-90)">-90°</button>
-        <div style="margin-top:6px; opacity:0.8;">
-            หมุนจนกว่าหน้าร้านจะหันเข้าหากล้อง แล้วจดค่าองศาไว้เพื่อใส่ค่าคงที่ในโค้ด
-        </div>
-    </div>
 
     <!-- Core Three.js & Loaders -->
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
@@ -88,40 +52,19 @@
         directionalLight.position.set(0, 10, 10);
         scene.add(directionalLight);
 
-        let loadedModel = null;
-        // *** ค่านี้คือมุมหมุนเริ่มต้น (องศา) — 0 = หน้าร้าน (ป้าย SHUSHIDAI) หันเข้าหากล้อง ***
-        let currentAngleDeg = 0;
-
-        function applyRotation() {
-            if (!loadedModel) return;
-            loadedModel.rotation.y = currentAngleDeg * (Math.PI / 180);
-            document.getElementById('angleLabel').innerText = currentAngleDeg;
-        }
-
-        function rotateModel(deltaDeg) {
-            currentAngleDeg += deltaDeg;
-            applyRotation();
-        }
-
-        function setRotation(deg) {
-            currentAngleDeg = deg;
-            applyRotation();
-        }
-
         // 3. โหลดโมเดล Shushi.glb
         const loader = new THREE.GLTFLoader();
         const dracoLoader = new THREE.DRACOLoader();
         dracoLoader.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.6/');
         loader.setDRACOLoader(dracoLoader);
 
-        loader.load('https://supawitphumpurk.github.io/Shushi/Shushi.glb', (gltf) => {
+        loader.load('https://supawitphumpurk.github.io/Shushifull/Shushi.glb?v=', (gltf) => {
             const model = gltf.scene;
-            loadedModel = model;
 
-            // ตั้งมุมหมุนเริ่มต้น
-            applyRotation();
+            // --- [หันหน้าร้านเข้าหากล้อง ไม่ต้องหมุน] ---
+            model.rotation.y = 0;
 
-            // คำนวณขนาดและจุดศูนย์กลางหลังจากหมุน
+            // คำนวณขนาดและจุดศูนย์กลาง
             const box = new THREE.Box3().setFromObject(model);
             const center = box.getCenter(new THREE.Vector3());
             const size = box.getSize(new THREE.Vector3());
