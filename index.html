@@ -354,8 +354,8 @@ let photoTargetObj = null;
 /* ============================================================
    ปุ่มกลับ
 
-   MENU BACK  → Plane029
-   ABOUT BACK → Plane028
+   MENU BACK  → Plane.029
+   ABOUT BACK → Plane.028
 ============================================================ */
 
 let menuBackButtonObj = null;
@@ -448,7 +448,7 @@ loader.setDRACOLoader(
 
 loader.load(
 
-    "https://supawitphumpurk.github.io/Shushifull/Shushi.glb?v=1",
+    "https://supawitphumpurk.github.io/Shushifull/Shushi.glb?v=2",
 
 
     function (gltf) {
@@ -512,18 +512,18 @@ loader.load(
 
 
                 /* =================================================
-                   PLANE 028 / 029
-                   
+                   PLANE.028 / PLANE.029
+
                    ทำเป็นสีดำ
-                   
-                   Plane028 = About Back
-                   Plane029 = Menu Back
+
+                   Plane.028 = About Back
+                   Plane.029 = Menu Back
                 ================================================= */
 
                 if (
 
-                    node.name === "Plane028" ||
-                    node.name === "Plane029"
+                    node.name === "Plane.028" ||
+                    node.name === "Plane.029"
 
                 ) {
 
@@ -612,6 +612,7 @@ loader.load(
 
                 /* =================================================
                    MENU BUTTON
+
                    Plane025
                 ================================================= */
 
@@ -630,6 +631,7 @@ loader.load(
 
                 /* =================================================
                    ABOUT BUTTON
+
                    Plane026
                 ================================================= */
 
@@ -648,6 +650,7 @@ loader.load(
 
                 /* =================================================
                    PHOTO BUTTON
+
                    Plane027
                 ================================================= */
 
@@ -665,7 +668,8 @@ loader.load(
 
 
                 /* =================================================
-                   MENU TARGET เดิม
+                   MENU TARGET
+
                    Plane016
                 ================================================= */
 
@@ -683,7 +687,8 @@ loader.load(
 
 
                 /* =================================================
-                   ABOUT TARGET เดิม
+                   ABOUT TARGET
+
                    Plane017
                 ================================================= */
 
@@ -701,7 +706,8 @@ loader.load(
 
 
                 /* =================================================
-                   PHOTO TARGET เดิม
+                   PHOTO TARGET
+
                    Plane024
                 ================================================= */
 
@@ -720,13 +726,14 @@ loader.load(
 
                 /* =================================================
                    MENU BACK BUTTON
-                   Plane029
+
+                   Plane.029
                 ================================================= */
 
                 if (
 
                     node.name ===
-                    "Plane029"
+                    "Plane.029"
 
                 ) {
 
@@ -738,13 +745,14 @@ loader.load(
 
                 /* =================================================
                    ABOUT BACK BUTTON
-                   Plane028
+
+                   Plane.028
                 ================================================= */
 
                 if (
 
                     node.name ===
-                    "Plane028"
+                    "Plane.028"
 
                 ) {
 
@@ -999,6 +1007,53 @@ loader.load(
 
         );
 
+
+        /* ====================================================
+           DEBUG
+
+           ดูใน F12 > Console ว่าเจอปุ่มหรือไม่
+        ==================================================== */
+
+        console.log(
+            "MENU BUTTON:",
+            menuButtonObj
+        );
+
+        console.log(
+            "ABOUT BUTTON:",
+            aboutButtonObj
+        );
+
+        console.log(
+            "PHOTO BUTTON:",
+            photoButtonObj
+        );
+
+        console.log(
+            "MENU TARGET:",
+            menuTargetObj
+        );
+
+        console.log(
+            "ABOUT TARGET:",
+            aboutTargetObj
+        );
+
+        console.log(
+            "PHOTO TARGET:",
+            photoTargetObj
+        );
+
+        console.log(
+            "MENU BACK Plane.029:",
+            menuBackButtonObj
+        );
+
+        console.log(
+            "ABOUT BACK Plane.028:",
+            aboutBackButtonObj
+        );
+
     },
 
 
@@ -1030,6 +1085,56 @@ const raycaster =
 
 const mouse =
     new THREE.Vector2();
+
+
+/* ============================================================
+   ตรวจว่า Object ที่คลิกเป็นตัวเดียวกัน
+   หรือเป็นลูกของ Object นั้น
+============================================================ */
+
+function isHitObject(
+
+    hit,
+    target
+
+) {
+
+
+    if (!target) {
+
+        return false;
+
+    }
+
+
+    let current =
+        hit;
+
+
+    while (current) {
+
+
+        if (
+
+            current ===
+            target
+
+        ) {
+
+            return true;
+
+        }
+
+
+        current =
+            current.parent;
+
+    }
+
+
+    return false;
+
+}
 
 
 /* ============================================================
@@ -1118,8 +1223,13 @@ renderer.domElement.addEventListener(
 
         if (
 
-            hit ===
-            menuButtonObj
+            isHitObject(
+
+                hit,
+
+                menuButtonObj
+
+            )
 
         ) {
 
@@ -1140,8 +1250,13 @@ renderer.domElement.addEventListener(
 
         if (
 
-            hit ===
-            aboutButtonObj
+            isHitObject(
+
+                hit,
+
+                aboutButtonObj
+
+            )
 
         ) {
 
@@ -1162,8 +1277,13 @@ renderer.domElement.addEventListener(
 
         if (
 
-            hit ===
-            photoButtonObj
+            isHitObject(
+
+                hit,
+
+                photoButtonObj
+
+            )
 
         ) {
 
@@ -1177,17 +1297,23 @@ renderer.domElement.addEventListener(
         /* ====================================================
            MENU BACK
 
-           Plane029
+           Plane.029
            ↓
            หน้าหลัก
         ==================================================== */
 
         if (
 
-            hit ===
-            menuBackButtonObj
+            isHitObject(
+
+                hit,
+
+                menuBackButtonObj
+
+            )
 
         ) {
+
 
             if (
 
@@ -1200,6 +1326,7 @@ renderer.domElement.addEventListener(
 
             }
 
+
             return;
 
         }
@@ -1208,17 +1335,23 @@ renderer.domElement.addEventListener(
         /* ====================================================
            ABOUT BACK
 
-           Plane028
+           Plane.028
            ↓
            หน้าหลัก
         ==================================================== */
 
         if (
 
-            hit ===
-            aboutBackButtonObj
+            isHitObject(
+
+                hit,
+
+                aboutBackButtonObj
+
+            )
 
         ) {
+
 
             if (
 
@@ -1230,6 +1363,7 @@ renderer.domElement.addEventListener(
                 goBack();
 
             }
+
 
             return;
 
