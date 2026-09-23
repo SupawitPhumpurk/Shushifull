@@ -19,20 +19,23 @@
             height: 100vh;
         }
 
-        /* ข้อความแนะนำด้านบน */
+        /* ข้อความด้านบน */
         #hint {
             position: fixed;
             top: 14px;
             left: 50%;
             transform: translateX(-50%);
-            color: rgba(255,255,255,0.55);
-            font-size: 13px;
+            color: rgba(255,255,255,0.7);
+            font-size: 14px;
             z-index: 5;
             pointer-events: none;
             text-align: center;
+            background: rgba(0,0,0,0.35);
+            padding: 8px 14px;
+            border-radius: 8px;
         }
 
-        /* Debug box */
+        /* Debug */
         #debugBox {
             position: fixed;
             top: 14px;
@@ -57,11 +60,19 @@
 
     <div id="debugBox"></div>
 
-    <!-- Core Three.js & Loaders -->
+
+    <!-- Three.js -->
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+
+    <!-- GLTF Loader -->
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+
+    <!-- Orbit Controls -->
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
+    <!-- Draco Loader -->
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/DRACOLoader.js"></script>
+
 
     <script>
 
@@ -69,67 +80,111 @@
            ตั้งค่า
         ============================================================ */
 
-        const CURTAIN_OBJECT_NAMES = ["Plane011"];
+        const CURTAIN_OBJECT_NAMES = [
+            "Plane011"
+        ];
+
 
         /* ============================================================
            ข้อมูล Portfolio
         ============================================================ */
 
         const portfolioData = {
+
             name: "ศุภวิชญ์ พุ่มพฤกษ์",
+
             studentId: "6721601508",
+
             major: "วิทยาการคอมพิวเตอร์",
+
             faculty: "ศิลปศาสตร์และวิทยาศาสตร์",
+
             bio: "เนื้อหา portfolio (ผลงาน / โปรเจกต์) จะเพิ่มเติมภายหลัง"
+
         };
 
 
         /* ============================================================
-           1. Setup Scene & Camera
+           1. Scene
         ============================================================ */
 
         const scene = new THREE.Scene();
 
-        scene.background = new THREE.Color(0x1a1a1a);
+        scene.background =
+            new THREE.Color(0x1a1a1a);
 
 
-        /* Camera */
+        /* ============================================================
+           Camera
+        ============================================================ */
 
-        const camera = new THREE.PerspectiveCamera(
-            45,
-            window.innerWidth / window.innerHeight,
-            0.01,
-            1000
-        );
+        const camera =
+            new THREE.PerspectiveCamera(
+
+                45,
+
+                window.innerWidth /
+                window.innerHeight,
+
+                0.01,
+
+                1000
+
+            );
 
 
-        /* Renderer */
+        /* ============================================================
+           Renderer
+        ============================================================ */
 
-        const renderer = new THREE.WebGLRenderer({
-            antialias: true
-        });
+        const renderer =
+            new THREE.WebGLRenderer({
+
+                antialias: true
+
+            });
+
 
         renderer.setSize(
+
             window.innerWidth,
+
             window.innerHeight
+
         );
+
 
         renderer.setPixelRatio(
+
             window.devicePixelRatio
+
         );
 
-        // แก้สีเพี้ยน
-        renderer.outputEncoding = THREE.sRGBEncoding;
 
-        document.body.appendChild(renderer.domElement);
+        /* แก้สี */
+
+        renderer.outputEncoding =
+            THREE.sRGBEncoding;
 
 
-        /* Orbit Controls */
-
-        const controls = new THREE.OrbitControls(
-            camera,
+        document.body.appendChild(
             renderer.domElement
         );
+
+
+        /* ============================================================
+           Orbit Controls
+        ============================================================ */
+
+        const controls =
+            new THREE.OrbitControls(
+
+                camera,
+
+                renderer.domElement
+
+            );
+
 
         controls.enableDamping = true;
 
@@ -138,69 +193,126 @@
            แสง
         ============================================================ */
 
-        const ambientLight = new THREE.AmbientLight(
-            0xffffff,
-            1.0
+        const ambientLight =
+            new THREE.AmbientLight(
+
+                0xffffff,
+
+                1.0
+
+            );
+
+
+        scene.add(
+            ambientLight
         );
 
-        scene.add(ambientLight);
 
+        const directionalLight =
+            new THREE.DirectionalLight(
 
-        const directionalLight = new THREE.DirectionalLight(
-            0xffffff,
-            1.2
-        );
+                0xffffff,
+
+                1.2
+
+            );
+
 
         directionalLight.position.set(
+
             0,
+
             10,
+
             10
+
         );
 
-        scene.add(directionalLight);
+
+        scene.add(
+            directionalLight
+        );
 
 
         /* ============================================================
-           2. Cel Shading Gradient
+           2. Toon Gradient
         ============================================================ */
 
         function createToonGradientTexture() {
 
-            const canvas = document.createElement('canvas');
-
-            canvas.width = 4;
-            canvas.height = 1;
-
-            const ctx = canvas.getContext('2d');
-
-            const shades = [
-                80,
-                140,
-                190,
-                255
-            ];
-
-            shades.forEach((v, i) => {
-
-                ctx.fillStyle = `rgb(${v},${v},${v})`;
-
-                ctx.fillRect(
-                    i,
-                    0,
-                    1,
-                    1
+            const canvas =
+                document.createElement(
+                    'canvas'
                 );
 
-            });
+
+            canvas.width = 4;
+
+            canvas.height = 1;
 
 
-            const texture = new THREE.CanvasTexture(canvas);
+            const ctx =
+                canvas.getContext('2d');
 
-            texture.minFilter = THREE.NearestFilter;
-            texture.magFilter = THREE.NearestFilter;
-            texture.generateMipmaps = false;
+
+            const shades = [
+
+                80,
+
+                140,
+
+                190,
+
+                255
+
+            ];
+
+
+            shades.forEach(
+
+                (v, i) => {
+
+                    ctx.fillStyle =
+                        `rgb(${v},${v},${v})`;
+
+
+                    ctx.fillRect(
+
+                        i,
+
+                        0,
+
+                        1,
+
+                        1
+
+                    );
+
+                }
+
+            );
+
+
+            const texture =
+                new THREE.CanvasTexture(
+                    canvas
+                );
+
+
+            texture.minFilter =
+                THREE.NearestFilter;
+
+
+            texture.magFilter =
+                THREE.NearestFilter;
+
+
+            texture.generateMipmaps =
+                false;
+
 
             return texture;
+
         }
 
 
@@ -209,13 +321,15 @@
 
 
         /* ============================================================
-           3. ตัวแปร Object สำคัญ
+           3. ตัวแปร Object
         ============================================================ */
 
         let modelRoot = null;
 
 
-        /* ปุ่ม 3 จุด */
+        /* ------------------------------------------------------------
+           ปุ่ม 3 จุด
+        ------------------------------------------------------------ */
 
         let menuButtonObj = null;
 
@@ -224,7 +338,9 @@
         let photoButtonObj = null;
 
 
-        /* จุดเป้าหมายที่กล้องจะซูม */
+        /* ------------------------------------------------------------
+           จุดที่กล้องจะไป
+        ------------------------------------------------------------ */
 
         let menuTargetObj = null;
 
@@ -233,27 +349,42 @@
         let photoTargetObj = null;
 
 
-        /* ตำแหน่งกล้องเดิม */
+        /* ------------------------------------------------------------
+           ตำแหน่งกล้องเดิม
+        ------------------------------------------------------------ */
 
         let defaultCamPos =
             new THREE.Vector3();
+
 
         let defaultCamTarget =
             new THREE.Vector3();
 
 
-        /* Shader ผ้าม่าน */
+        /* ------------------------------------------------------------
+           สถานะว่ากำลังดูจุดพิเศษอยู่หรือไม่
+        ------------------------------------------------------------ */
+
+        let viewingMode = false;
+
+
+        /* ------------------------------------------------------------
+           Shader ผ้าม่าน
+        ------------------------------------------------------------ */
 
         const curtainShaders = [];
 
-        const clock = new THREE.Clock();
+
+        const clock =
+            new THREE.Clock();
 
 
         /* ============================================================
-           4. โหลดโมเดล Shushi.glb
+           4. โหลดโมเดล
         ============================================================ */
 
-        const loader = new THREE.GLTFLoader();
+        const loader =
+            new THREE.GLTFLoader();
 
 
         const dracoLoader =
@@ -261,7 +392,9 @@
 
 
         dracoLoader.setDecoderPath(
+
             'https://www.gstatic.com/draco/versioned/decoders/1.5.6/'
+
         );
 
 
@@ -271,13 +404,18 @@
 
 
         loader.load(
+
             'https://supawitphumpurk.github.io/Shushifull/Shushi.glb?v=',
+
 
             (gltf) => {
 
-                const model = gltf.scene;
+                const model =
+                    gltf.scene;
 
-                modelRoot = model;
+
+                modelRoot =
+                    model;
 
 
                 /* ----------------------------------------------------
@@ -289,240 +427,317 @@
 
 
                 /* ----------------------------------------------------
-                   Debug รายชื่อ Mesh
+                   เก็บชื่อ Mesh
                 ---------------------------------------------------- */
 
                 const allMeshNames = [];
 
 
                 /* ----------------------------------------------------
-                   ไล่ทุก Mesh
+                   Traverse Mesh
                 ---------------------------------------------------- */
 
-                model.traverse((node) => {
+                model.traverse(
 
-                    if (!node.isMesh) return;
+                    (node) => {
 
-
-                    allMeshNames.push(
-                        node.name
-                    );
+                        if (!node.isMesh)
+                            return;
 
 
-                    /* เก็บ Material เดิม */
-
-                    const originalMap =
-                        node.material
-                            ? node.material.map
-                            : null;
-
-
-                    const originalColor =
-                        node.material &&
-                        node.material.color
-                            ? node.material.color.clone()
-                            : new THREE.Color(0xffffff);
-
-
-                    /* ------------------------------------------------
-                       PBR Material สำหรับ Cylinder
-                    ------------------------------------------------ */
-
-                    if (
-                        node.name.startsWith(
-                            'Cylinder'
-                        )
-                    ) {
-
-                        node.material =
-                            new THREE.MeshStandardMaterial({
-
-                                map: originalMap,
-
-                                color: originalColor,
-
-                                metalness: 0.85,
-
-                                roughness: 0.25
-
-                            });
-
-                    }
-
-
-                    /* ------------------------------------------------
-                       Cel Shading สำหรับ Icosphere
-                    ------------------------------------------------ */
-
-                    if (
-                        node.name.startsWith(
-                            'Icosphere'
-                        )
-                    ) {
-
-                        node.material =
-                            new THREE.MeshToonMaterial({
-
-                                map: originalMap,
-
-                                color: originalColor,
-
-                                gradientMap:
-                                    toonGradientMap
-
-                            });
-
-                    }
-
-
-                    /* ------------------------------------------------
-                       เก็บปุ่มทั้ง 3
-                    ------------------------------------------------ */
-
-                    if (
-                        node.name === 'Plane025'
-                    ) {
-
-                        menuButtonObj = node;
-
-                    }
-
-
-                    if (
-                        node.name === 'Plane026'
-                    ) {
-
-                        aboutButtonObj = node;
-
-                    }
-
-
-                    if (
-                        node.name === 'Plane027'
-                    ) {
-
-                        photoButtonObj = node;
-
-                    }
-
-
-                    /* ------------------------------------------------
-                       เก็บ Target ทั้ง 3
-                    ------------------------------------------------ */
-
-                    if (
-                        node.name === 'Plane016'
-                    ) {
-
-                        menuTargetObj = node;
-
-                    }
-
-
-                    if (
-                        node.name === 'Plane017'
-                    ) {
-
-                        aboutTargetObj = node;
-
-                    }
-
-
-                    if (
-                        node.name === 'Plane024'
-                    ) {
-
-                        photoTargetObj = node;
-
-                    }
-
-
-                    /* ------------------------------------------------
-                       Vertex Shader ผ้าม่าน
-                    ------------------------------------------------ */
-
-                    if (
-                        CURTAIN_OBJECT_NAMES.includes(
+                        allMeshNames.push(
                             node.name
-                        )
-                    ) {
+                        );
 
-                        node.material.onBeforeCompile =
-                            (shader) => {
 
-                                shader.uniforms.uTime = {
-                                    value: 0
+                        /* --------------------------------------------
+                           Material เดิม
+                        -------------------------------------------- */
+
+                        const originalMap =
+                            node.material
+                                ? node.material.map
+                                : null;
+
+
+                        const originalColor =
+                            node.material &&
+                            node.material.color
+
+                                ? node.material.color.clone()
+
+                                : new THREE.Color(
+                                    0xffffff
+                                );
+
+
+                        /* --------------------------------------------
+                           Cylinder
+                        -------------------------------------------- */
+
+                        if (
+                            node.name.startsWith(
+                                'Cylinder'
+                            )
+                        ) {
+
+                            node.material =
+                                new THREE.MeshStandardMaterial({
+
+                                    map:
+                                        originalMap,
+
+                                    color:
+                                        originalColor,
+
+                                    metalness:
+                                        0.85,
+
+                                    roughness:
+                                        0.25
+
+                                });
+
+                        }
+
+
+                        /* --------------------------------------------
+                           Icosphere
+                        -------------------------------------------- */
+
+                        if (
+                            node.name.startsWith(
+                                'Icosphere'
+                            )
+                        ) {
+
+                            node.material =
+                                new THREE.MeshToonMaterial({
+
+                                    map:
+                                        originalMap,
+
+                                    color:
+                                        originalColor,
+
+                                    gradientMap:
+                                        toonGradientMap
+
+                                });
+
+                        }
+
+
+                        /* --------------------------------------------
+                           ปุ่ม Menu
+                        -------------------------------------------- */
+
+                        if (
+                            node.name ===
+                            'Plane025'
+                        ) {
+
+                            menuButtonObj =
+                                node;
+
+                        }
+
+
+                        /* --------------------------------------------
+                           ปุ่ม About Me
+                        -------------------------------------------- */
+
+                        if (
+                            node.name ===
+                            'Plane026'
+                        ) {
+
+                            aboutButtonObj =
+                                node;
+
+                        }
+
+
+                        /* --------------------------------------------
+                           ปุ่ม Photo
+                        -------------------------------------------- */
+
+                        if (
+                            node.name ===
+                            'Plane027'
+                        ) {
+
+                            photoButtonObj =
+                                node;
+
+                        }
+
+
+                        /* --------------------------------------------
+                           Target Menu
+                        -------------------------------------------- */
+
+                        if (
+                            node.name ===
+                            'Plane016'
+                        ) {
+
+                            menuTargetObj =
+                                node;
+
+                        }
+
+
+                        /* --------------------------------------------
+                           Target About Me
+                        -------------------------------------------- */
+
+                        if (
+                            node.name ===
+                            'Plane017'
+                        ) {
+
+                            aboutTargetObj =
+                                node;
+
+                        }
+
+
+                        /* --------------------------------------------
+                           Target Photo
+                        -------------------------------------------- */
+
+                        if (
+                            node.name ===
+                            'Plane024'
+                        ) {
+
+                            photoTargetObj =
+                                node;
+
+                        }
+
+
+                        /* --------------------------------------------
+                           ผ้าม่าน
+                        -------------------------------------------- */
+
+                        if (
+                            CURTAIN_OBJECT_NAMES.includes(
+                                node.name
+                            )
+                        ) {
+
+                            node.material.onBeforeCompile =
+                                (shader) => {
+
+                                    shader.uniforms.uTime = {
+                                        value: 0
+                                    };
+
+
+                                    shader.vertexShader =
+                                        'uniform float uTime;\n' +
+                                        shader.vertexShader;
+
+
+                                    shader.vertexShader =
+                                        shader.vertexShader.replace(
+
+                                            '#include <begin_vertex>',
+
+                                            `
+
+                                            #include <begin_vertex>
+
+                                            float waveStrength = 0.04;
+
+                                            float waveSpeed = 2.0;
+
+                                            float waveFreq = 6.0;
+
+                                            float hangFactor =
+                                                clamp(
+                                                    1.0 -
+                                                    (position.y + 1.0),
+                                                    0.0,
+                                                    1.0
+                                                );
+
+
+                                            transformed.x +=
+
+                                                sin(
+
+                                                    position.y *
+                                                    waveFreq +
+
+                                                    uTime *
+                                                    waveSpeed
+
+                                                )
+
+                                                *
+
+                                                waveStrength
+
+                                                *
+
+                                                hangFactor;
+
+
+                                            transformed.z +=
+
+                                                cos(
+
+                                                    position.y *
+                                                    waveFreq *
+                                                    0.7 +
+
+                                                    uTime *
+                                                    waveSpeed
+
+                                                )
+
+                                                *
+
+                                                waveStrength *
+
+                                                0.5 *
+
+                                                hangFactor;
+
+                                            `
+
+                                        );
+
+
+                                    curtainShaders.push(
+                                        shader
+                                    );
+
                                 };
 
 
-                                shader.vertexShader =
-                                    'uniform float uTime;\n' +
-                                    shader.vertexShader;
+                            node.material.needsUpdate =
+                                true;
 
-
-                                shader.vertexShader =
-                                    shader.vertexShader.replace(
-
-                                        '#include <begin_vertex>',
-
-                                        `
-                                        #include <begin_vertex>
-
-                                        float waveStrength = 0.04;
-
-                                        float waveSpeed = 2.0;
-
-                                        float waveFreq = 6.0;
-
-                                        float hangFactor =
-                                            clamp(
-                                                1.0 - (position.y + 1.0),
-                                                0.0,
-                                                1.0
-                                            );
-
-                                        transformed.x +=
-                                            sin(
-                                                position.y * waveFreq +
-                                                uTime * waveSpeed
-                                            )
-                                            * waveStrength
-                                            * hangFactor;
-
-                                        transformed.z +=
-                                            cos(
-                                                position.y * waveFreq * 0.7 +
-                                                uTime * waveSpeed
-                                            )
-                                            * waveStrength
-                                            * 0.5
-                                            * hangFactor;
-                                        `
-                                    );
-
-
-                                curtainShaders.push(
-                                    shader
-                                );
-
-                            };
-
-
-                        node.material.needsUpdate =
-                            true;
+                        }
 
                     }
 
-                });
+                );
 
 
                 /* ====================================================
-                   จัดขนาดโมเดล
+                   คำนวณขนาดโมเดล
                 ==================================================== */
 
                 const box =
                     new THREE.Box3()
-                        .setFromObject(model);
+                        .setFromObject(
+                            model
+                        );
 
 
                 const center =
@@ -537,7 +752,7 @@
                     );
 
 
-                /* จัดโมเดลให้อยู่ตรงกลาง */
+                /* จัดโมเดลให้อยู่กลาง */
 
                 model.position.sub(
                     center
@@ -550,9 +765,13 @@
 
                 const maxDim =
                     Math.max(
+
                         size.x,
+
                         size.y,
+
                         size.z
+
                     );
 
 
@@ -563,13 +782,16 @@
 
                 let cameraZ =
                     Math.abs(
+
                         maxDim /
+
                         (
                             2 *
                             Math.tan(
                                 fov / 2
                             )
                         )
+
                     );
 
 
@@ -577,23 +799,33 @@
 
 
                 camera.position.set(
+
                     0,
+
                     0,
+
                     cameraZ
+
                 );
 
 
                 controls.target.set(
+
                     0,
+
                     0,
+
                     0
+
                 );
 
 
                 controls.update();
 
 
-                /* เก็บตำแหน่งกล้องเดิม */
+                /* ====================================================
+                   บันทึกตำแหน่งกล้องเดิม
+                ==================================================== */
 
                 defaultCamPos.copy(
                     camera.position
@@ -605,23 +837,25 @@
                 );
 
 
-                /* เพิ่มโมเดลเข้า Scene */
+                /* เพิ่มโมเดล */
 
-                scene.add(model);
+                scene.add(
+                    model
+                );
 
 
                 /* ====================================================
-                   Debug Console
+                   Debug
                 ==================================================== */
 
                 console.log(
-                    'รายชื่อ mesh ทั้งหมดในโมเดล:',
+                    'รายชื่อ Mesh:',
                     allMeshNames
                 );
 
 
                 console.log(
-                    'menuButtonObj:',
+                    'Menu:',
                     menuButtonObj
                         ? menuButtonObj.name
                         : 'ไม่เจอ'
@@ -629,7 +863,7 @@
 
 
                 console.log(
-                    'aboutButtonObj:',
+                    'About:',
                     aboutButtonObj
                         ? aboutButtonObj.name
                         : 'ไม่เจอ'
@@ -637,7 +871,7 @@
 
 
                 console.log(
-                    'photoButtonObj:',
+                    'Photo:',
                     photoButtonObj
                         ? photoButtonObj.name
                         : 'ไม่เจอ'
@@ -645,7 +879,7 @@
 
 
                 console.log(
-                    'menuTargetObj:',
+                    'Menu Target:',
                     menuTargetObj
                         ? menuTargetObj.name
                         : 'ไม่เจอ'
@@ -653,7 +887,7 @@
 
 
                 console.log(
-                    'aboutTargetObj:',
+                    'About Target:',
                     aboutTargetObj
                         ? aboutTargetObj.name
                         : 'ไม่เจอ'
@@ -661,22 +895,29 @@
 
 
                 console.log(
-                    'photoTargetObj:',
+                    'Photo Target:',
                     photoTargetObj
                         ? photoTargetObj.name
                         : 'ไม่เจอ'
                 );
 
 
+                /* ถ้าหาปุ่มไม่เจอ */
+
                 if (
+
                     !menuButtonObj ||
+
                     !aboutButtonObj ||
+
                     !photoButtonObj
+
                 ) {
 
                     document.getElementById(
                         'hint'
                     ).innerText =
+
                         'บางปุ่มยังไม่เจอ object ในโมเดล — เปิด Console (F12) ดูรายชื่อทั้งหมด';
 
                 }
@@ -690,11 +931,15 @@
             (error) => {
 
                 console.error(
+
                     'เกิดข้อผิดพลาดในการโหลดโมเดล:',
+
                     error
+
                 );
 
             }
+
         );
 
 
@@ -711,15 +956,49 @@
 
 
         renderer.domElement.addEventListener(
+
             'click',
+
             (event) => {
 
-                if (!modelRoot) return;
+
+                /* ====================================================
+                   ถ้ากำลังดู Menu / About / Photo อยู่
+                   คลิกซ้าย = ออกจากการดู
+                ==================================================== */
+
+                if (viewingMode) {
+
+                    viewingMode = false;
 
 
-                /* คำนวณตำแหน่ง Mouse */
+                    resetCamera();
+
+
+                    document.getElementById(
+                        'hint'
+                    ).innerText =
+
+                        'คลิก Menu / About Me / Photo เพื่อดูโมเดล';
+
+
+                    return;
+
+                }
+
+
+                /* ถ้ายังโหลดโมเดลไม่เสร็จ */
+
+                if (!modelRoot)
+                    return;
+
+
+                /* ====================================================
+                   ตำแหน่ง Mouse
+                ==================================================== */
 
                 mouse.x =
+
                     (
                         event.clientX /
                         window.innerWidth
@@ -727,31 +1006,43 @@
 
 
                 mouse.y =
+
                     -(
                         event.clientY /
                         window.innerHeight
                     ) * 2 + 1;
 
 
-                /* Raycaster */
+                /* ====================================================
+                   Raycaster
+                ==================================================== */
 
                 raycaster.setFromCamera(
+
                     mouse,
+
                     camera
+
                 );
 
 
                 const intersects =
+
                     raycaster.intersectObject(
+
                         modelRoot,
+
                         true
+
                     );
 
 
                 if (
                     intersects.length === 0
                 ) {
+
                     return;
+
                 }
 
 
@@ -778,13 +1069,16 @@
 
 
                 console.log(
+
                     'คลิกโดน object ชื่อ:',
+
                     hit.name
+
                 );
 
 
                 /* ====================================================
-                   ปุ่ม Menu
+                   Menu
                 ==================================================== */
 
                 if (
@@ -797,7 +1091,7 @@
 
 
                 /* ====================================================
-                   ปุ่ม About Me
+                   About Me
                 ==================================================== */
 
                 else if (
@@ -810,7 +1104,7 @@
 
 
                 /* ====================================================
-                   ปุ่ม Photo
+                   Photo
                 ==================================================== */
 
                 else if (
@@ -822,27 +1116,35 @@
                 }
 
             }
+
         );
 
 
         /* ============================================================
-           6. Camera Fly
+           6. Camera Focus
         ============================================================ */
 
         let flyAnim = null;
 
 
         function focusOnObject(
+
             obj,
+
             distanceMultiplier = 2.2
+
         ) {
 
-            if (!obj) return;
+
+            if (!obj)
+                return;
 
 
             const box =
                 new THREE.Box3()
-                    .setFromObject(obj);
+                    .setFromObject(
+                        obj
+                    );
 
 
             const center =
@@ -859,18 +1161,26 @@
 
             const maxDim =
                 Math.max(
+
                     size.x,
+
                     size.y,
+
                     size.z,
+
                     0.2
+
                 );
 
 
             const dir =
                 new THREE.Vector3()
                     .subVectors(
+
                         camera.position,
+
                         controls.target
+
                     )
                     .normalize();
 
@@ -879,30 +1189,42 @@
                 center
                     .clone()
                     .add(
+
                         dir.multiplyScalar(
+
                             maxDim *
                             distanceMultiplier
+
                         )
+
                     );
 
 
             flyCameraTo(
+
                 targetCamPos,
+
                 center
+
             );
 
         }
 
 
         /* ============================================================
-           เคลื่อนกล้องแบบ Smooth
+           Camera Fly
         ============================================================ */
 
         function flyCameraTo(
+
             targetPos,
+
             targetLook,
+
             duration = 900
+
         ) {
+
 
             if (flyAnim) {
 
@@ -930,35 +1252,59 @@
 
             function step(now) {
 
+
                 const t =
+
                     Math.min(
+
                         (now - startTime) /
                         duration,
+
                         1
+
                     );
 
 
                 const ease =
+
                     t < 0.5
-                        ? 2 * t * t
-                        : 1 -
-                          Math.pow(
-                              -2 * t + 2,
-                              2
-                          ) / 2;
+
+                        ?
+
+                        2 * t * t
+
+                        :
+
+                        1 -
+
+                        Math.pow(
+
+                            -2 * t + 2,
+
+                            2
+
+                        ) / 2;
 
 
                 camera.position.lerpVectors(
+
                     startPos,
+
                     targetPos,
+
                     ease
+
                 );
 
 
                 controls.target.lerpVectors(
+
                     startTarget,
+
                     targetLook,
+
                     ease
+
                 );
 
 
@@ -968,10 +1314,12 @@
                 if (t < 1) {
 
                     flyAnim = {
+
                         id:
                             requestAnimationFrame(
                                 step
                             )
+
                     };
 
                 }
@@ -986,77 +1334,125 @@
 
 
             flyAnim = {
+
                 id:
                     requestAnimationFrame(
                         step
                     )
+
             };
 
         }
 
 
         /* ============================================================
-           กลับกล้องไปตำแหน่งเดิม
-           ใช้ได้จากโค้ด หากต้องการในอนาคต
+           กลับตำแหน่งกล้องเดิม
         ============================================================ */
 
         function resetCamera() {
 
+
             flyCameraTo(
+
                 defaultCamPos,
+
                 defaultCamTarget
+
             );
 
         }
 
 
         /* ============================================================
-           7. ปุ่มทั้ง 3
-           ไม่มีหน้าต่าง Popup แล้ว
+           7. Menu
         ============================================================ */
-
-
-        /* Menu */
 
         function showMenu() {
 
+
+            viewingMode = true;
+
+
+            document.getElementById(
+                'hint'
+            ).innerText =
+
+                'กำลังดู Menu — คลิกซ้ายเพื่อออก';
+
+
             focusOnObject(
+
                 menuTargetObj,
+
                 1.6
-            );
 
-        }
-
-
-        /* About Me */
-
-        function showAboutMe() {
-
-            focusOnObject(
-                aboutTargetObj,
-                2.0
-            );
-
-        }
-
-
-        /* Photo */
-
-        function showPhoto() {
-
-            focusOnObject(
-                photoTargetObj,
-                1.4
             );
 
         }
 
 
         /* ============================================================
-           8. Render Loop
+           8. About Me
+        ============================================================ */
+
+        function showAboutMe() {
+
+
+            viewingMode = true;
+
+
+            document.getElementById(
+                'hint'
+            ).innerText =
+
+                'กำลังดู About Me — คลิกซ้ายเพื่อออก';
+
+
+            focusOnObject(
+
+                aboutTargetObj,
+
+                2.0
+
+            );
+
+        }
+
+
+        /* ============================================================
+           9. Photo
+        ============================================================ */
+
+        function showPhoto() {
+
+
+            viewingMode = true;
+
+
+            document.getElementById(
+                'hint'
+            ).innerText =
+
+                'กำลังดู Photo — คลิกซ้ายเพื่อออก';
+
+
+            focusOnObject(
+
+                photoTargetObj,
+
+                1.4
+
+            );
+
+        }
+
+
+        /* ============================================================
+           10. Animation Loop
         ============================================================ */
 
         function animate() {
+
 
             controls.update();
 
@@ -1066,18 +1462,23 @@
 
 
             curtainShaders.forEach(
+
                 (shader) => {
 
                     shader.uniforms.uTime.value =
                         t;
 
                 }
+
             );
 
 
             renderer.render(
+
                 scene,
+
                 camera
+
             );
 
 
@@ -1092,14 +1493,18 @@
 
 
         /* ============================================================
-           9. Responsive
+           11. Resize
         ============================================================ */
 
         window.addEventListener(
+
             'resize',
+
             () => {
 
+
                 camera.aspect =
+
                     window.innerWidth /
                     window.innerHeight;
 
@@ -1108,11 +1513,15 @@
 
 
                 renderer.setSize(
+
                     window.innerWidth,
+
                     window.innerHeight
+
                 );
 
             }
+
         );
 
     </script>
