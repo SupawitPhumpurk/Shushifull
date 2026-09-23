@@ -38,67 +38,12 @@
 
         }
 
-
-        /* =====================================================
-           ปุ่มกลับ
-        ===================================================== */
-
-        #backButton {
-
-            position: fixed;
-
-            top: 25px;
-            left: 25px;
-
-            z-index: 100;
-
-            display: none;
-
-            padding: 10px 18px;
-
-            border: none;
-
-            border-radius: 10px;
-
-            background: rgba(20, 20, 20, 0.9);
-
-            color: white;
-
-            font-size: 16px;
-
-            font-weight: bold;
-
-            cursor: pointer;
-
-            box-shadow:
-                0 4px 12px
-                rgba(0, 0, 0, 0.3);
-
-        }
-
-
-        #backButton:hover {
-
-            background:
-                rgba(60, 60, 60, 0.95);
-
-        }
-
     </style>
 
 </head>
 
 
 <body>
-
-
-<!-- =========================================================
-     ปุ่มกลับ
-========================================================= -->
-
-<button id="backButton">
-    ← กลับ
-</button>
 
 
 <!-- =========================================================
@@ -205,7 +150,6 @@ document.body.appendChild(
 
    คลิกซ้าย + ลาก = หมุน
    Scroll = Zoom
-   คลิกขวา = ไม่ใช้
 ============================================================ */
 
 const controls =
@@ -234,7 +178,7 @@ controls.enablePan =
     false;
 
 
-/* ใช้คลิกซ้ายหมุน */
+/* คลิกซ้ายหมุน */
 
 controls.mouseButtons.LEFT =
     THREE.MOUSE.ROTATE;
@@ -384,7 +328,9 @@ const toonGradientMap =
 let modelRoot = null;
 
 
-/* ปุ่ม */
+/* ============================================================
+   ปุ่มหลัก
+============================================================ */
 
 let menuButtonObj = null;
 
@@ -393,11 +339,30 @@ let aboutButtonObj = null;
 let photoButtonObj = null;
 
 
-/* จุดเป้าหมาย */
+/* ============================================================
+   จุดปลายทาง
+============================================================ */
+
+/*
+   MENU
+   Plane025 → Plane029
+*/
 
 let menuTargetObj = null;
 
+
+/*
+   ABOUT ME
+   Plane026 → Plane028
+*/
+
 let aboutTargetObj = null;
+
+
+/*
+   PHOTO
+   Plane027 → Plane024
+*/
 
 let photoTargetObj = null;
 
@@ -422,6 +387,13 @@ let viewingMode = false;
 
 
 /* ============================================================
+   CURRENT PAGE
+============================================================ */
+
+let currentPage = null;
+
+
+/* ============================================================
    CAMERA ANIMATION
 ============================================================ */
 
@@ -437,16 +409,6 @@ const curtainShaders = [];
 
 const clock =
     new THREE.Clock();
-
-
-/* ============================================================
-   BACK BUTTON
-============================================================ */
-
-const backButton =
-    document.getElementById(
-        "backButton"
-    );
 
 
 /* ============================================================
@@ -500,7 +462,7 @@ loader.load(
 
 
         /* ====================================================
-           ROTATION
+           MODEL ROTATION
         ==================================================== */
 
         model.rotation.y =
@@ -508,7 +470,7 @@ loader.load(
 
 
         /* ====================================================
-           TRAVERSE
+           TRAVERSE MODEL
         ==================================================== */
 
         model.traverse(
@@ -549,7 +511,7 @@ loader.load(
 
 
                 /* =================================================
-                   PBR
+                   PBR MATERIAL
                 ================================================= */
 
                 if (
@@ -614,7 +576,8 @@ loader.load(
 
 
                 /* =================================================
-                   MENU BUTTON
+                   PLANE 025
+                   MENU
                 ================================================= */
 
                 if (
@@ -631,7 +594,8 @@ loader.load(
 
 
                 /* =================================================
-                   ABOUT ME BUTTON
+                   PLANE 026
+                   ABOUT ME
                 ================================================= */
 
                 if (
@@ -648,7 +612,8 @@ loader.load(
 
 
                 /* =================================================
-                   PHOTO BUTTON
+                   PLANE 027
+                   PHOTO
                 ================================================= */
 
                 if (
@@ -665,13 +630,14 @@ loader.load(
 
 
                 /* =================================================
+                   PLANE 029
                    MENU TARGET
                 ================================================= */
 
                 if (
 
                     node.name ===
-                    "Plane016"
+                    "Plane029"
 
                 ) {
 
@@ -682,13 +648,14 @@ loader.load(
 
 
                 /* =================================================
+                   PLANE 028
                    ABOUT TARGET
                 ================================================= */
 
                 if (
 
                     node.name ===
-                    "Plane017"
+                    "Plane028"
 
                 ) {
 
@@ -699,6 +666,7 @@ loader.load(
 
 
                 /* =================================================
+                   PLANE 024
                    PHOTO TARGET
                 ================================================= */
 
@@ -995,11 +963,6 @@ const mouse =
 
 /* ============================================================
    LEFT CLICK
-
-   ถ้าไม่ได้อยู่ในโหมดดู:
-   คลิกปุ่ม = เปิดเมนู
-
-   คลิก + ลากพื้นที่อื่น = OrbitControls หมุนโมเดล
 ============================================================ */
 
 renderer.domElement.addEventListener(
@@ -1009,14 +972,19 @@ renderer.domElement.addEventListener(
     function (event) {
 
 
-        if (viewingMode) {
+        if (!modelRoot) {
 
             return;
 
         }
 
 
-        if (!modelRoot) {
+        /*
+         * ถ้ากำลังบินกล้องอยู่
+         * ไม่รับคลิก
+         */
+
+        if (flyAnimation) {
 
             return;
 
@@ -1076,6 +1044,7 @@ renderer.domElement.addEventListener(
 
         /* ====================================================
            MENU
+           Plane025 → Plane029
         ==================================================== */
 
         if (
@@ -1087,14 +1056,17 @@ renderer.domElement.addEventListener(
 
             showMenu();
 
+            return;
+
         }
 
 
         /* ====================================================
            ABOUT ME
+           Plane026 → Plane028
         ==================================================== */
 
-        else if (
+        if (
 
             hit ===
             aboutButtonObj
@@ -1103,14 +1075,17 @@ renderer.domElement.addEventListener(
 
             showAboutMe();
 
+            return;
+
         }
 
 
         /* ====================================================
            PHOTO
+           Plane027
         ==================================================== */
 
-        else if (
+        if (
 
             hit ===
             photoButtonObj
@@ -1119,56 +1094,47 @@ renderer.domElement.addEventListener(
 
             showPhoto();
 
+            return;
+
         }
 
-    }
 
-);
+        /* ====================================================
+           BACK MENU
+           Plane029
+        ==================================================== */
 
+        if (
 
-/* ============================================================
-   SHOW BACK BUTTON
-============================================================ */
+            hit ===
+            menuTargetObj
 
-function showBackButton() {
+        ) {
 
-    backButton.style.display =
-        "block";
+            goBack();
 
-}
+            return;
 
-
-/* ============================================================
-   HIDE BACK BUTTON
-============================================================ */
-
-function hideBackButton() {
-
-    backButton.style.display =
-        "none";
-
-}
+        }
 
 
-/* ============================================================
-   BACK BUTTON CLICK
-============================================================ */
+        /* ====================================================
+           BACK ABOUT
+           Plane028
+        ==================================================== */
 
-backButton.addEventListener(
+        if (
 
-    "click",
+            hit ===
+            aboutTargetObj
 
-    function () {
+        ) {
 
+            goBack();
 
-        viewingMode =
-            false;
+            return;
 
-
-        hideBackButton();
-
-
-        resetCamera();
+        }
 
     }
 
@@ -1189,6 +1155,10 @@ function focusOnObject(
 
 
     if (!object) {
+
+        console.warn(
+            "ไม่พบ Target Object"
+        );
 
         return;
 
@@ -1223,13 +1193,6 @@ function focusOnObject(
             0.1
 
         );
-
-
-    controls.target.copy(
-
-        center
-
-    );
 
 
     const direction =
@@ -1286,9 +1249,7 @@ function focusOnObject(
 
         center,
 
-        900,
-
-        true
+        900
 
     );
 
@@ -1305,9 +1266,7 @@ function flyCameraTo(
 
     targetLookAt,
 
-    duration = 900,
-
-    lockAfter = false
+    duration = 900
 
 ) {
 
@@ -1452,24 +1411,8 @@ function flyCameraTo(
             );
 
 
-            if (lockAfter) {
-
-                controls.enabled =
-                    true;
-
-                /*
-                 * เปิดให้คลิกซ้ายลากหมุนได้
-                 * แม้อยู่ในโหมดดู
-                 */
-
-            }
-
-            else {
-
-                controls.enabled =
-                    true;
-
-            }
+            controls.enabled =
+                true;
 
 
             flyAnimation =
@@ -1492,32 +1435,6 @@ function flyCameraTo(
 
 
 /* ============================================================
-   RESET CAMERA
-============================================================ */
-
-function resetCamera() {
-
-
-    controls.enabled =
-        false;
-
-
-    flyCameraTo(
-
-        defaultCamPos,
-
-        defaultCamTarget,
-
-        900,
-
-        false
-
-    );
-
-}
-
-
-/* ============================================================
    MENU
 ============================================================ */
 
@@ -1528,8 +1445,15 @@ function showMenu() {
         true;
 
 
-    showBackButton();
+    currentPage =
+        "menu";
 
+
+    /*
+     * Plane025
+     * ↓
+     * Plane029
+     */
 
     focusOnObject(
 
@@ -1553,8 +1477,15 @@ function showAboutMe() {
         true;
 
 
-    showBackButton();
+    currentPage =
+        "about";
 
+
+    /*
+     * Plane026
+     * ↓
+     * Plane028
+     */
 
     focusOnObject(
 
@@ -1578,7 +1509,8 @@ function showPhoto() {
         true;
 
 
-    showBackButton();
+    currentPage =
+        "photo";
 
 
     focusOnObject(
@@ -1586,6 +1518,38 @@ function showPhoto() {
         photoTargetObj,
 
         1.8
+
+    );
+
+}
+
+
+/* ============================================================
+   GO BACK
+============================================================ */
+
+function goBack() {
+
+
+    viewingMode =
+        false;
+
+
+    currentPage =
+        null;
+
+
+    controls.enabled =
+        false;
+
+
+    flyCameraTo(
+
+        defaultCamPos,
+
+        defaultCamTarget,
+
+        900
 
     );
 
@@ -1625,7 +1589,7 @@ function animate() {
 
 
     /* ========================================================
-       CURTAIN ANIMATION
+       CURTAIN
     ======================================================== */
 
     const time =
@@ -1659,10 +1623,6 @@ function animate() {
 
 }
 
-
-/* ============================================================
-   START
-============================================================ */
 
 animate();
 
