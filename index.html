@@ -1,1711 +1,527 @@
 <!DOCTYPE html>
 <html lang="th">
-
 <head>
-
     <meta charset="UTF-8">
-
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0"
-    >
-
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>3D Model - Shushi</title>
-
     <style>
-
-        html,
-        body {
-
+        html, body {
             margin: 0;
             padding: 0;
-
             width: 100%;
             height: 100%;
-
             overflow: hidden;
-
             background: #1a1a1a;
-
         }
 
         canvas {
-
             display: block;
-
             width: 100%;
             height: 100%;
-
         }
-
     </style>
-
 </head>
-
 
 <body>
 
-
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
-
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
-
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
-
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/DRACOLoader.js"></script>
 
-
 <script>
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x1a1a1a);
 
-
-/* ============================================================
-   SCENE
-============================================================ */
-
-const scene =
-    new THREE.Scene();
-
-
-scene.background =
-    new THREE.Color(0x1a1a1a);
-
-
-/* ============================================================
-   CAMERA
-============================================================ */
-
-const camera =
-    new THREE.PerspectiveCamera(
-
-        45,
-
-        window.innerWidth /
-        window.innerHeight,
-
-        0.01,
-
-        1000
-
-    );
-
-
-/* ============================================================
-   RENDERER
-============================================================ */
-
-const renderer =
-    new THREE.WebGLRenderer({
-
-        antialias: true
-
-    });
-
-
-renderer.setSize(
-
-    window.innerWidth,
-
-    window.innerHeight
-
+const camera = new THREE.PerspectiveCamera(
+    45,
+    window.innerWidth / window.innerHeight,
+    0.01,
+    1000
 );
 
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setPixelRatio(window.devicePixelRatio);
+renderer.outputEncoding = THREE.sRGBEncoding;
+document.body.appendChild(renderer.domElement);
 
-renderer.setPixelRatio(
+// Orbit Controls
+const controls = new THREE.OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.enableRotate = true;
+controls.enableZoom = true;
+controls.enablePan = false;
+controls.mouseButtons.LEFT = THREE.MOUSE.ROTATE;
+controls.mouseButtons.RIGHT = null;
 
-    window.devicePixelRatio
+// Light
+const ambientLight = new THREE.AmbientLight(0xffffff, 1.0);
+scene.add(ambientLight);
 
-);
+const directionalLight = new THREE.DirectionalLight(0xffffff, 1.2);
+directionalLight.position.set(0, 10, 10);
+scene.add(directionalLight);
 
-
-renderer.outputEncoding =
-    THREE.sRGBEncoding;
-
-
-document.body.appendChild(
-
-    renderer.domElement
-
-);
-
-
-/* ============================================================
-   ORBIT CONTROLS
-============================================================ */
-
-const controls =
-    new THREE.OrbitControls(
-
-        camera,
-
-        renderer.domElement
-
-    );
-
-
-controls.enableDamping =
-    true;
-
-controls.enableRotate =
-    true;
-
-controls.enableZoom =
-    true;
-
-controls.enablePan =
-    false;
-
-controls.mouseButtons.LEFT =
-    THREE.MOUSE.ROTATE;
-
-controls.mouseButtons.RIGHT =
-    null;
-
-
-/* ============================================================
-   LIGHT
-============================================================ */
-
-const ambientLight =
-    new THREE.AmbientLight(
-
-        0xffffff,
-
-        1.0
-
-    );
-
-scene.add(
-    ambientLight
-);
-
-
-const directionalLight =
-    new THREE.DirectionalLight(
-
-        0xffffff,
-
-        1.2
-
-    );
-
-directionalLight.position.set(
-
-    0,
-    10,
-    10
-
-);
-
-scene.add(
-    directionalLight
-);
-
-
-/* ============================================================
-   TOON GRADIENT
-============================================================ */
-
+// Toon Gradient
 function createToonGradientTexture() {
-
-    const canvas =
-        document.createElement("canvas");
-
+    const canvas = document.createElement("canvas");
     canvas.width = 4;
     canvas.height = 1;
 
-    const ctx =
-        canvas.getContext("2d");
+    const ctx = canvas.getContext("2d");
+    const shades = [80, 140, 190, 255];
 
-    const shades = [
-        80,
-        140,
-        190,
-        255
-    ];
+    shades.forEach((value, index) => {
+        ctx.fillStyle = `rgb(${value},${value},${value})`;
+        ctx.fillRect(index, 0, 1, 1);
+    });
 
-    shades.forEach(
-
-        (value, index) => {
-
-            ctx.fillStyle =
-                `rgb(${value},${value},${value})`;
-
-            ctx.fillRect(
-
-                index,
-                0,
-                1,
-                1
-
-            );
-
-        }
-
-    );
-
-    const texture =
-        new THREE.CanvasTexture(canvas);
-
-    texture.minFilter =
-        THREE.NearestFilter;
-
-    texture.magFilter =
-        THREE.NearestFilter;
-
-    texture.generateMipmaps =
-        false;
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.minFilter = THREE.NearestFilter;
+    texture.magFilter = THREE.NearestFilter;
+    texture.generateMipmaps = false;
 
     return texture;
-
 }
 
+const toonGradientMap = createToonGradientTexture();
 
-const toonGradientMap =
-    createToonGradientTexture();
-
-
-/* ============================================================
-   OBJECTS
-============================================================ */
-
+// Objects
 let modelRoot = null;
 
-
-/* ปุ่มหลัก */
-
 let menuButtonObj = null;
-
 let aboutButtonObj = null;
-
 let photoButtonObj = null;
 
-
-/* Target เดิม */
-
 let menuTargetObj = null;
-
 let aboutTargetObj = null;
-
 let photoTargetObj = null;
 
+// Text Back Buttons
+// Text.007 = ABOUT
+// Text.008 = MENU
+let aboutBackTextObj = null;
+let menuBackTextObj = null;
 
-/* ปุ่มกลับ */
-
-let menuBackButtonObj = null;
-
-let aboutBackButtonObj = null;
-
-
-/* ============================================================
-   CAMERA STATE
-============================================================ */
-
-let defaultCamPos =
-    new THREE.Vector3();
-
-let defaultCamTarget =
-    new THREE.Vector3();
-
+// Camera
+let defaultCamPos = new THREE.Vector3();
+let defaultCamTarget = new THREE.Vector3();
 
 let currentPage = null;
-
 let flyAnimation = null;
 
-
-/* ============================================================
-   CURTAIN
-============================================================ */
-
+// Curtain Shader
 const curtainShaders = [];
+const clock = new THREE.Clock();
 
-const clock =
-    new THREE.Clock();
+// GLTF Loader
+const loader = new THREE.GLTFLoader();
 
-
-/* ============================================================
-   GLTF LOADER
-============================================================ */
-
-const loader =
-    new THREE.GLTFLoader();
-
-
-const dracoLoader =
-    new THREE.DRACOLoader();
-
-
+const dracoLoader = new THREE.DRACOLoader();
 dracoLoader.setDecoderPath(
-
     "https://www.gstatic.com/draco/versioned/decoders/1.5.6/"
-
 );
 
+loader.setDRACOLoader(dracoLoader);
 
-loader.setDRACOLoader(
-
-    dracoLoader
-
-);
-
-
-/* ============================================================
-   LOAD GLB
-
-   v=3 เพื่อบังคับโหลดไฟล์ใหม่
-============================================================ */
-
+// Load GLB
 loader.load(
-
     "https://supawitphumpurk.github.io/Shushifull/Shushi.glb?v=3",
 
+    function(gltf) {
+        const model = gltf.scene;
+        modelRoot = model;
 
-    function (gltf) {
+        // หมุนโมเดล
+        model.rotation.y = -Math.PI / 2;
 
+        model.traverse(function(node) {
 
-        const model =
-            gltf.scene;
-
-
-        modelRoot =
-            model;
-
-
-        /* ====================================================
-           ROTATION
-        ==================================================== */
-
-        model.rotation.y =
-            -Math.PI / 2;
-
-
-        /* ====================================================
-           TRAVERSE
-        ==================================================== */
-
-        model.traverse(
-
-            function (node) {
-
-
-                if (!node.isMesh) {
-
-                    return;
-
-                }
-
-
-                /* =================================================
-                   ORIGINAL MATERIAL
-                ================================================= */
-
-                const originalMap =
-
-                    node.material
-                        ? node.material.map
-                        : null;
-
-
-                const originalColor =
-
-                    node.material &&
-                    node.material.color
-
-                        ? node.material.color.clone()
-
-                        : new THREE.Color(0xffffff);
-
-
-                /* =================================================
-                   ชื่อ Object
-
-                   รองรับทั้ง
-
-                   Plane.028
-                   Plane028
-
-                   Plane.029
-                   Plane029
-                ================================================= */
-
-                const isBack028 =
-
-                    node.name === "Plane.028" ||
-                    node.name === "Plane028";
-
-
-                const isBack029 =
-
-                    node.name === "Plane.029" ||
-                    node.name === "Plane029";
-
-
-                /* =================================================
-                   BACK BUTTON 028
-
-                   บังคับเป็นสีดำ
-                ================================================= */
-
-                if (isBack028) {
-
-
-                    aboutBackButtonObj =
-                        node;
-
-
-                    node.material =
-                        new THREE.MeshStandardMaterial({
-
-                            color: 0x000000,
-
-                            metalness: 0.0,
-
-                            roughness: 0.8
-
-                        });
-
-
-                    node.material.needsUpdate =
-                        true;
-
-                }
-
-
-                /* =================================================
-                   BACK BUTTON 029
-
-                   บังคับเป็นสีดำ
-                ================================================= */
-
-                if (isBack029) {
-
-
-                    menuBackButtonObj =
-                        node;
-
-
-                    node.material =
-                        new THREE.MeshStandardMaterial({
-
-                            color: 0x000000,
-
-                            metalness: 0.0,
-
-                            roughness: 0.8
-
-                        });
-
-
-                    node.material.needsUpdate =
-                        true;
-
-                }
-
-
-                /* =================================================
-                   PBR
-                ================================================= */
-
-                if (
-
-                    node.name.startsWith(
-                        "Cylinder"
-                    )
-
-                ) {
-
-
-                    node.material =
-                        new THREE.MeshStandardMaterial({
-
-                            map:
-                                originalMap,
-
-                            color:
-                                originalColor,
-
-                            metalness:
-                                0.85,
-
-                            roughness:
-                                0.25
-
-                        });
-
-                }
-
-
-                /* =================================================
-                   CEL SHADING
-                ================================================= */
-
-                if (
-
-                    node.name.startsWith(
-                        "Icosphere"
-                    )
-
-                ) {
-
-
-                    node.material =
-                        new THREE.MeshToonMaterial({
-
-                            map:
-                                originalMap,
-
-                            color:
-                                originalColor,
-
-                            gradientMap:
-                                toonGradientMap
-
-                        });
-
-                }
-
-
-                /* =================================================
-                   MENU BUTTON
-                   Plane025
-                ================================================= */
-
-                if (
-
-                    node.name ===
-                    "Plane025"
-
-                ) {
-
-                    menuButtonObj =
-                        node;
-
-                }
-
-
-                /* =================================================
-                   ABOUT BUTTON
-                   Plane026
-                ================================================= */
-
-                if (
-
-                    node.name ===
-                    "Plane026"
-
-                ) {
-
-                    aboutButtonObj =
-                        node;
-
-                }
-
-
-                /* =================================================
-                   PHOTO BUTTON
-                   Plane027
-                ================================================= */
-
-                if (
-
-                    node.name ===
-                    "Plane027"
-
-                ) {
-
-                    photoButtonObj =
-                        node;
-
-                }
-
-
-                /* =================================================
-                   MENU TARGET
-                   Plane016
-                ================================================= */
-
-                if (
-
-                    node.name ===
-                    "Plane016"
-
-                ) {
-
-                    menuTargetObj =
-                        node;
-
-                }
-
-
-                /* =================================================
-                   ABOUT TARGET
-                   Plane017
-                ================================================= */
-
-                if (
-
-                    node.name ===
-                    "Plane017"
-
-                ) {
-
-                    aboutTargetObj =
-                        node;
-
-                }
-
-
-                /* =================================================
-                   PHOTO TARGET
-                   Plane024
-                ================================================= */
-
-                if (
-
-                    node.name ===
-                    "Plane024"
-
-                ) {
-
-                    photoTargetObj =
-                        node;
-
-                }
-
-
-                /* =================================================
-                   CURTAIN
-                ================================================= */
-
-                if (
-
-                    node.name ===
-                    "Plane011"
-
-                ) {
-
-
-                    if (node.material) {
-
-
-                        node.material.onBeforeCompile =
-
-                            function (shader) {
-
-
-                                shader.uniforms.uTime = {
-
-                                    value: 0
-
-                                };
-
-
-                                shader.vertexShader =
-
-                                    "uniform float uTime;\n" +
-
-                                    shader.vertexShader;
-
-
-                                shader.vertexShader =
-
-                                    shader.vertexShader.replace(
-
-                                        "#include <begin_vertex>",
-
-                                        `
-
-                                        #include <begin_vertex>
-
-                                        float waveStrength = 0.04;
-
-                                        float waveSpeed = 2.0;
-
-                                        float waveFreq = 6.0;
-
-                                        float hangFactor =
-
-                                            clamp(
-
-                                                1.0 -
-                                                (position.y + 1.0),
-
-                                                0.0,
-                                                1.0
-
-                                            );
-
-
-                                        transformed.x +=
-
-                                            sin(
-
-                                                position.y *
-                                                waveFreq +
-
-                                                uTime *
-                                                waveSpeed
-
-                                            )
-
-                                            *
-
-                                            waveStrength
-
-                                            *
-
-                                            hangFactor;
-
-
-                                        transformed.z +=
-
-                                            cos(
-
-                                                position.y *
-                                                waveFreq *
-                                                0.7 +
-
-                                                uTime *
-                                                waveSpeed
-
-                                            )
-
-                                            *
-
-                                            waveStrength
-
-                                            *
-
-                                            0.5
-
-                                            *
-
-                                            hangFactor;
-
-                                        `
-
-                                    );
-
-
-                                curtainShaders.push(
-                                    shader
-                                );
-
-                            };
-
-
-                        node.material.needsUpdate =
-                            true;
-
-                    }
-
-                }
-
+            // Text.007 = ปุ่มกลับหน้า ABOUT
+            if (node.name === "Text.007") {
+                aboutBackTextObj = node;
             }
 
+            // Text.008 = ปุ่มกลับหน้า MENU
+            if (node.name === "Text.008") {
+                menuBackTextObj = node;
+            }
+
+            if (!node.isMesh) return;
+
+            // เก็บ Material เดิม
+            const originalMap = node.material
+                ? node.material.map
+                : null;
+
+            const originalColor = node.material && node.material.color
+                ? node.material.color.clone()
+                : new THREE.Color(0xffffff);
+
+            // PBR Material
+            if (node.name.startsWith("Cylinder")) {
+                node.material = new THREE.MeshStandardMaterial({
+                    map: originalMap,
+                    color: originalColor,
+                    metalness: 0.85,
+                    roughness: 0.25
+                });
+            }
+
+            // Cel Shading
+            if (node.name.startsWith("Icosphere")) {
+                node.material = new THREE.MeshToonMaterial({
+                    map: originalMap,
+                    color: originalColor,
+                    gradientMap: toonGradientMap
+                });
+            }
+
+            // MENU Button
+            if (node.name === "Plane025") {
+                menuButtonObj = node;
+            }
+
+            // ABOUT Button
+            if (node.name === "Plane026") {
+                aboutButtonObj = node;
+            }
+
+            // PHOTO Button
+            if (node.name === "Plane027") {
+                photoButtonObj = node;
+            }
+
+            // MENU Target
+            if (node.name === "Plane016") {
+                menuTargetObj = node;
+            }
+
+            // ABOUT Target
+            if (node.name === "Plane017") {
+                aboutTargetObj = node;
+            }
+
+            // PHOTO Target
+            if (node.name === "Plane024") {
+                photoTargetObj = node;
+            }
+
+            // Curtain Animation
+            if (node.name === "Plane011" && node.material) {
+                node.material.onBeforeCompile = function(shader) {
+                    shader.uniforms.uTime = { value: 0 };
+
+                    shader.vertexShader =
+                        "uniform float uTime;\n" +
+                        shader.vertexShader;
+
+                    shader.vertexShader = shader.vertexShader.replace(
+                        "#include <begin_vertex>",
+                        `
+                        #include <begin_vertex>
+
+                        float waveStrength = 0.04;
+                        float waveSpeed = 2.0;
+                        float waveFreq = 6.0;
+
+                        float hangFactor = clamp(
+                            1.0 - (position.y + 1.0),
+                            0.0,
+                            1.0
+                        );
+
+                        transformed.x +=
+                            sin(position.y * waveFreq + uTime * waveSpeed)
+                            * waveStrength
+                            * hangFactor;
+
+                        transformed.z +=
+                            cos(position.y * waveFreq * 0.7 + uTime * waveSpeed)
+                            * waveStrength
+                            * 0.5
+                            * hangFactor;
+                        `
+                    );
+
+                    curtainShaders.push(shader);
+                };
+
+                node.material.needsUpdate = true;
+            }
+        });
+
+        // จัดโมเดลให้อยู่ตรงกลาง
+        const box = new THREE.Box3().setFromObject(model);
+        const center = box.getCenter(new THREE.Vector3());
+        const size = box.getSize(new THREE.Vector3());
+
+        model.position.sub(center);
+
+        // ตั้งกล้องเริ่มต้น
+        const maxDim = Math.max(size.x, size.y, size.z);
+        const fov = camera.fov * Math.PI / 180;
+
+        let cameraZ = Math.abs(
+            maxDim / (2 * Math.tan(fov / 2))
         );
-
-
-        /* ====================================================
-           CENTER MODEL
-        ==================================================== */
-
-        const box =
-            new THREE.Box3()
-                .setFromObject(model);
-
-
-        const center =
-            box.getCenter(
-                new THREE.Vector3()
-            );
-
-
-        const size =
-            box.getSize(
-                new THREE.Vector3()
-            );
-
-
-        model.position.sub(
-            center
-        );
-
-
-        /* ====================================================
-           INITIAL CAMERA
-        ==================================================== */
-
-        const maxDim =
-            Math.max(
-
-                size.x,
-                size.y,
-                size.z
-
-            );
-
-
-        const fov =
-            camera.fov *
-            Math.PI /
-            180;
-
-
-        let cameraZ =
-
-            Math.abs(
-
-                maxDim /
-
-                (
-                    2 *
-                    Math.tan(
-                        fov / 2
-                    )
-                )
-
-            );
-
 
         cameraZ *= 1.35;
 
+        camera.position.set(0, 0, cameraZ);
 
-        camera.position.set(
-
-            0,
-            0,
-            cameraZ
-
-        );
-
-
-        controls.target.set(
-
-            0,
-            0,
-            0
-
-        );
-
-
+        controls.target.set(0, 0, 0);
         controls.update();
 
+        // บันทึกตำแหน่งกล้องเริ่มต้น
+        defaultCamPos.copy(camera.position);
+        defaultCamTarget.copy(controls.target);
 
-        /* ====================================================
-           SAVE DEFAULT CAMERA
-        ==================================================== */
+        scene.add(model);
 
-        defaultCamPos.copy(
-            camera.position
-        );
-
-
-        defaultCamTarget.copy(
-            controls.target
-        );
-
-
-        scene.add(
-            model
-        );
-
-
-        /* ====================================================
-           DEBUG
-        ==================================================== */
-
-        console.log(
-            "MENU BACK =",
-            menuBackButtonObj
-        );
-
-        console.log(
-            "ABOUT BACK =",
-            aboutBackButtonObj
-        );
-
-
+        console.log("ABOUT BACK =", aboutBackTextObj);
+        console.log("MENU BACK =", menuBackTextObj);
     },
-
 
     undefined,
 
-
-    function (error) {
-
-        console.error(
-
-            "โหลดโมเดลไม่สำเร็จ",
-
-            error
-
-        );
-
+    function(error) {
+        console.error("โหลดโมเดลไม่สำเร็จ", error);
     }
-
 );
 
+// Raycaster
+const raycaster = new THREE.Raycaster();
+const mouse = new THREE.Vector2();
 
-/* ============================================================
-   RAYCASTER
-============================================================ */
+// ตรวจสอบ Object และ Parent
+function isObjectOrChild(object, target) {
+    if (!target) return false;
 
-const raycaster =
-    new THREE.Raycaster();
-
-
-const mouse =
-    new THREE.Vector2();
-
-
-/* ============================================================
-   CHECK OBJECT / PARENT
-============================================================ */
-
-function isObjectOrChild(
-
-    object,
-    target
-
-) {
-
-
-    if (!target) {
-
-        return false;
-
-    }
-
-
-    let current =
-        object;
-
+    let current = object;
 
     while (current) {
-
-
-        if (
-            current === target
-        ) {
-
-            return true;
-
-        }
-
-
-        current =
-            current.parent;
-
+        if (current === target) return true;
+        current = current.parent;
     }
-
 
     return false;
-
 }
 
+// Click
+renderer.domElement.addEventListener("click", function(event) {
+    if (!modelRoot || flyAnimation) return;
 
-/* ============================================================
-   CLICK
-============================================================ */
+    mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+    mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
 
-renderer.domElement.addEventListener(
+    raycaster.setFromCamera(mouse, camera);
 
-    "click",
+    const intersects = raycaster.intersectObject(modelRoot, true);
 
-    function (event) {
+    if (intersects.length === 0) return;
 
+    // เช็กปุ่ม Back ก่อน
+    for (let i = 0; i < intersects.length; i++) {
+        const hit = intersects[i].object;
 
-        if (!modelRoot) {
-
+        // Text.008 = MENU Back
+        if (isObjectOrChild(hit, menuBackTextObj)) {
+            if (currentPage === "menu") {
+                goBack();
+            }
             return;
-
         }
 
-
-        if (flyAnimation) {
-
+        // Text.007 = ABOUT Back
+        if (isObjectOrChild(hit, aboutBackTextObj)) {
+            if (currentPage === "about") {
+                goBack();
+            }
             return;
-
         }
-
-
-        mouse.x =
-
-            (
-                event.clientX /
-                window.innerWidth
-            ) * 2 - 1;
-
-
-        mouse.y =
-
-            -(
-                event.clientY /
-                window.innerHeight
-            ) * 2 + 1;
-
-
-        raycaster.setFromCamera(
-
-            mouse,
-
-            camera
-
-        );
-
-
-        const intersects =
-
-            raycaster.intersectObject(
-
-                modelRoot,
-
-                true
-
-            );
-
-
-        if (
-            intersects.length === 0
-        ) {
-
-            return;
-
-        }
-
-
-        /* ====================================================
-           IMPORTANT
-
-           เช็กปุ่มกลับก่อน
-           เพราะบางครั้งมี Object อื่นบังอยู่
-        ==================================================== */
-
-        for (
-
-            let i = 0;
-
-            i < intersects.length;
-
-            i++
-
-        ) {
-
-
-            const hit =
-                intersects[i].object;
-
-
-            /* =================================================
-               MENU BACK
-               Plane.029 / Plane029
-            ================================================= */
-
-            if (
-
-                isObjectOrChild(
-
-                    hit,
-
-                    menuBackButtonObj
-
-                )
-
-            ) {
-
-
-                if (
-                    currentPage === "menu"
-                ) {
-
-                    goBack();
-
-                }
-
-
-                return;
-
-            }
-
-
-            /* =================================================
-               ABOUT BACK
-               Plane.028 / Plane028
-            ================================================= */
-
-            if (
-
-                isObjectOrChild(
-
-                    hit,
-
-                    aboutBackButtonObj
-
-                )
-
-            ) {
-
-
-                if (
-                    currentPage === "about"
-                ) {
-
-                    goBack();
-
-                }
-
-
-                return;
-
-            }
-
-        }
-
-
-        /* ====================================================
-           ปุ่มหลัก
-        ==================================================== */
-
-        for (
-
-            let i = 0;
-
-            i < intersects.length;
-
-            i++
-
-        ) {
-
-
-            const hit =
-                intersects[i].object;
-
-
-            /* MENU */
-
-            if (
-
-                isObjectOrChild(
-
-                    hit,
-
-                    menuButtonObj
-
-                )
-
-            ) {
-
-                showMenu();
-
-                return;
-
-            }
-
-
-            /* ABOUT */
-
-            if (
-
-                isObjectOrChild(
-
-                    hit,
-
-                    aboutButtonObj
-
-                )
-
-            ) {
-
-                showAboutMe();
-
-                return;
-
-            }
-
-
-            /* PHOTO */
-
-            if (
-
-                isObjectOrChild(
-
-                    hit,
-
-                    photoButtonObj
-
-                )
-
-            ) {
-
-                showPhoto();
-
-                return;
-
-            }
-
-        }
-
     }
 
-);
+    // เช็กปุ่มหลัก
+    for (let i = 0; i < intersects.length; i++) {
+        const hit = intersects[i].object;
 
+        // MENU
+        if (isObjectOrChild(hit, menuButtonObj)) {
+            showMenu();
+            return;
+        }
 
-/* ============================================================
-   FOCUS OBJECT
-============================================================ */
+        // ABOUT
+        if (isObjectOrChild(hit, aboutButtonObj)) {
+            showAboutMe();
+            return;
+        }
 
-function focusOnObject(
+        // PHOTO
+        if (isObjectOrChild(hit, photoButtonObj)) {
+            showPhoto();
+            return;
+        }
+    }
+});
 
-    object,
-
-    distance = 1.8
-
-) {
-
-
+// Focus Object
+function focusOnObject(object, distance = 1.8) {
     if (!object) {
-
-        console.warn(
-            "ไม่พบ Target"
-        );
-
+        console.warn("ไม่พบ Target");
         return;
-
     }
 
+    const box = new THREE.Box3().setFromObject(object);
+    const center = box.getCenter(new THREE.Vector3());
+    const size = box.getSize(new THREE.Vector3());
 
-    const box =
-        new THREE.Box3()
-            .setFromObject(object);
+    const maxDim = Math.max(size.x, size.y, size.z, 0.1);
 
+    const direction = new THREE.Vector3();
+    direction.subVectors(camera.position, center);
 
-    const center =
-        box.getCenter(
-            new THREE.Vector3()
-        );
-
-
-    const size =
-        box.getSize(
-            new THREE.Vector3()
-        );
-
-
-    const maxDim =
-        Math.max(
-
-            size.x,
-            size.y,
-            size.z,
-            0.1
-
-        );
-
-
-    const direction =
-        new THREE.Vector3();
-
-
-    direction.subVectors(
-
-        camera.position,
-
-        center
-
-    );
-
-
-    if (
-
-        direction.lengthSq() <
-        0.0001
-
-    ) {
-
-        direction.set(
-
-            0,
-            0,
-            1
-
-        );
-
+    if (direction.lengthSq() < 0.0001) {
+        direction.set(0, 0, 1);
     }
-
 
     direction.normalize();
 
-
-    const targetCameraPosition =
-
-        center.clone().add(
-
-            direction.multiplyScalar(
-
-                maxDim *
-                distance
-
-            )
-
-        );
-
-
-    flyCameraTo(
-
-        targetCameraPosition,
-
-        center,
-
-        900
-
+    const targetCameraPosition = center.clone().add(
+        direction.multiplyScalar(maxDim * distance)
     );
 
+    flyCameraTo(
+        targetCameraPosition,
+        center,
+        900
+    );
 }
 
-
-/* ============================================================
-   CAMERA FLY
-============================================================ */
-
-function flyCameraTo(
-
-    targetPosition,
-
-    targetLookAt,
-
-    duration = 900
-
-) {
-
-
+// Camera Animation
+function flyCameraTo(targetPosition, targetLookAt, duration = 900) {
     if (flyAnimation) {
-
-        cancelAnimationFrame(
-            flyAnimation
-        );
-
+        cancelAnimationFrame(flyAnimation);
     }
 
+    const startPosition = camera.position.clone();
+    const startTarget = controls.target.clone();
+    const startTime = performance.now();
 
-    const startPosition =
-        camera.position.clone();
-
-
-    const startTarget =
-        controls.target.clone();
-
-
-    const startTime =
-        performance.now();
-
-
-    controls.enabled =
-        false;
-
+    controls.enabled = false;
 
     function animateCamera(now) {
+        const progress = Math.min(
+            (now - startTime) / duration,
+            1
+        );
 
-
-        const progress =
-
-            Math.min(
-
-                (
-                    now -
-                    startTime
-                ) /
-                duration,
-
-                1
-
-            );
-
-
-        const ease =
-
-            progress < 0.5
-
-                ?
-
-                2 *
-                progress *
-                progress
-
-                :
-
-                1 -
-
-                Math.pow(
-
-                    -2 *
-                    progress +
-                    2,
-
-                    2
-
-                ) / 2;
-
+        const ease = progress < 0.5
+            ? 2 * progress * progress
+            : 1 - Math.pow(-2 * progress + 2, 2) / 2;
 
         camera.position.lerpVectors(
-
             startPosition,
-
             targetPosition,
-
             ease
-
         );
-
 
         controls.target.lerpVectors(
-
             startTarget,
-
             targetLookAt,
-
             ease
-
         );
 
+        camera.lookAt(controls.target);
 
-        camera.lookAt(
+        if (progress < 1) {
+            flyAnimation = requestAnimationFrame(animateCamera);
+        } else {
+            camera.position.copy(targetPosition);
+            controls.target.copy(targetLookAt);
+            camera.lookAt(targetLookAt);
 
-            controls.target
-
-        );
-
-
-        if (
-            progress < 1
-        ) {
-
-
-            flyAnimation =
-
-                requestAnimationFrame(
-
-                    animateCamera
-
-                );
-
+            controls.enabled = true;
+            flyAnimation = null;
         }
-
-        else {
-
-
-            camera.position.copy(
-                targetPosition
-            );
-
-
-            controls.target.copy(
-                targetLookAt
-            );
-
-
-            camera.lookAt(
-                targetLookAt
-            );
-
-
-            controls.enabled =
-                true;
-
-
-            flyAnimation =
-                null;
-
-        }
-
     }
 
-
-    flyAnimation =
-
-        requestAnimationFrame(
-
-            animateCamera
-
-        );
-
+    flyAnimation = requestAnimationFrame(animateCamera);
 }
 
-
-/* ============================================================
-   MENU
-============================================================ */
-
+// MENU
 function showMenu() {
-
-
-    currentPage =
-        "menu";
-
+    currentPage = "menu";
 
     focusOnObject(
-
         menuTargetObj,
-
         2.0
-
     );
-
 }
 
-
-/* ============================================================
-   ABOUT ME
-============================================================ */
-
+// ABOUT ME
 function showAboutMe() {
-
-
-    currentPage =
-        "about";
-
+    currentPage = "about";
 
     focusOnObject(
-
         aboutTargetObj,
-
         2.0
-
     );
-
 }
 
-
-/* ============================================================
-   PHOTO
-============================================================ */
-
+// PHOTO
 function showPhoto() {
-
-
-    currentPage =
-        "photo";
-
+    currentPage = "photo";
 
     focusOnObject(
-
         photoTargetObj,
-
         1.8
-
     );
-
 }
 
-
-/* ============================================================
-   GO BACK
-============================================================ */
-
+// GO BACK
 function goBack() {
-
-
-    currentPage =
-        null;
-
+    currentPage = null;
 
     flyCameraTo(
-
         defaultCamPos,
-
         defaultCamTarget,
-
         900
-
     );
-
 }
 
-
-/* ============================================================
-   ANIMATION
-============================================================ */
-
+// Animation
 function animate() {
+    requestAnimationFrame(animate);
 
-
-    requestAnimationFrame(
-        animate
-    );
-
-
-    if (
-        controls.enabled
-    ) {
-
+    if (controls.enabled) {
         controls.update();
-
     }
 
+    const time = clock.getElapsedTime();
 
-    const time =
-        clock.getElapsedTime();
+    curtainShaders.forEach(function(shader) {
+        shader.uniforms.uTime.value = time;
+    });
 
-
-    curtainShaders.forEach(
-
-        function (shader) {
-
-            shader.uniforms.uTime.value =
-                time;
-
-        }
-
-    );
-
-
-    renderer.render(
-
-        scene,
-
-        camera
-
-    );
-
+    renderer.render(scene, camera);
 }
-
 
 animate();
 
+// Resize
+window.addEventListener("resize", function() {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
 
-/* ============================================================
-   RESIZE
-============================================================ */
-
-window.addEventListener(
-
-    "resize",
-
-    function () {
-
-
-        camera.aspect =
-
-            window.innerWidth /
-            window.innerHeight;
-
-
-        camera.updateProjectionMatrix();
-
-
-        renderer.setSize(
-
-            window.innerWidth,
-
-            window.innerHeight
-
-        );
-
-    }
-
-);
-
+    renderer.setSize(
+        window.innerWidth,
+        window.innerHeight
+    );
+});
 </script>
 
 </body>
-
 </html>
