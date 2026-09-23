@@ -46,10 +46,6 @@
 <body>
 
 
-<!-- =========================================================
-     THREE.JS
-========================================================= -->
-
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
 
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
@@ -63,17 +59,6 @@
 
 
 /* ============================================================
-   SETTINGS
-============================================================ */
-
-const CURTAIN_OBJECT_NAMES = [
-
-    "Plane011"
-
-];
-
-
-/* ============================================================
    SCENE
 ============================================================ */
 
@@ -82,9 +67,7 @@ const scene =
 
 
 scene.background =
-    new THREE.Color(
-        0x1a1a1a
-    );
+    new THREE.Color(0x1a1a1a);
 
 
 /* ============================================================
@@ -147,10 +130,6 @@ document.body.appendChild(
 
 /* ============================================================
    ORBIT CONTROLS
-
-   คลิกซ้าย + ลาก = หมุน
-   Scroll = Zoom
-   คลิกขวา = ไม่ใช้
 ============================================================ */
 
 const controls =
@@ -166,22 +145,17 @@ const controls =
 controls.enableDamping =
     true;
 
-
 controls.enableRotate =
     true;
-
 
 controls.enableZoom =
     true;
 
-
 controls.enablePan =
     false;
 
-
 controls.mouseButtons.LEFT =
     THREE.MOUSE.ROTATE;
-
 
 controls.mouseButtons.RIGHT =
     null;
@@ -200,11 +174,8 @@ const ambientLight =
 
     );
 
-
 scene.add(
-
     ambientLight
-
 );
 
 
@@ -217,7 +188,6 @@ const directionalLight =
 
     );
 
-
 directionalLight.position.set(
 
     0,
@@ -226,11 +196,8 @@ directionalLight.position.set(
 
 );
 
-
 scene.add(
-
     directionalLight
-
 );
 
 
@@ -240,42 +207,28 @@ scene.add(
 
 function createToonGradientTexture() {
 
-
     const canvas =
-        document.createElement(
-            "canvas"
-        );
-
+        document.createElement("canvas");
 
     canvas.width = 4;
-
     canvas.height = 1;
 
-
     const ctx =
-        canvas.getContext(
-            "2d"
-        );
-
+        canvas.getContext("2d");
 
     const shades = [
-
         80,
         140,
         190,
         255
-
     ];
-
 
     shades.forEach(
 
         (value, index) => {
 
-
             ctx.fillStyle =
                 `rgb(${value},${value},${value})`;
-
 
             ctx.fillRect(
 
@@ -290,24 +243,17 @@ function createToonGradientTexture() {
 
     );
 
-
     const texture =
-        new THREE.CanvasTexture(
-            canvas
-        );
-
+        new THREE.CanvasTexture(canvas);
 
     texture.minFilter =
         THREE.NearestFilter;
 
-
     texture.magFilter =
         THREE.NearestFilter;
 
-
     texture.generateMipmaps =
         false;
-
 
     return texture;
 
@@ -319,15 +265,13 @@ const toonGradientMap =
 
 
 /* ============================================================
-   OBJECT VARIABLES
+   OBJECTS
 ============================================================ */
 
 let modelRoot = null;
 
 
-/* ============================================================
-   ปุ่มหลัก
-============================================================ */
+/* ปุ่มหลัก */
 
 let menuButtonObj = null;
 
@@ -336,13 +280,7 @@ let aboutButtonObj = null;
 let photoButtonObj = null;
 
 
-/* ============================================================
-   TARGET เดิม
-
-   MENU    → Plane016
-   ABOUT   → Plane017
-   PHOTO   → Plane024
-============================================================ */
+/* Target เดิม */
 
 let menuTargetObj = null;
 
@@ -351,12 +289,7 @@ let aboutTargetObj = null;
 let photoTargetObj = null;
 
 
-/* ============================================================
-   ปุ่มกลับ
-
-   MENU BACK  → Plane.029
-   ABOUT BACK → Plane.028
-============================================================ */
+/* ปุ่มกลับ */
 
 let menuBackButtonObj = null;
 
@@ -364,39 +297,17 @@ let aboutBackButtonObj = null;
 
 
 /* ============================================================
-   DEFAULT CAMERA
+   CAMERA STATE
 ============================================================ */
 
 let defaultCamPos =
     new THREE.Vector3();
 
-
 let defaultCamTarget =
     new THREE.Vector3();
 
 
-/* ============================================================
-   VIEW MODE
-============================================================ */
-
-let viewingMode = false;
-
-
-/* ============================================================
-   CURRENT PAGE
-
-   null  = หน้าหลัก
-   menu  = หน้า MENU
-   about = หน้า ABOUT
-   photo = หน้า PHOTO
-============================================================ */
-
 let currentPage = null;
-
-
-/* ============================================================
-   CAMERA ANIMATION
-============================================================ */
 
 let flyAnimation = null;
 
@@ -406,7 +317,6 @@ let flyAnimation = null;
 ============================================================ */
 
 const curtainShaders = [];
-
 
 const clock =
     new THREE.Clock();
@@ -419,10 +329,6 @@ const clock =
 const loader =
     new THREE.GLTFLoader();
 
-
-/* ============================================================
-   DRACO
-============================================================ */
 
 const dracoLoader =
     new THREE.DRACOLoader();
@@ -443,12 +349,14 @@ loader.setDRACOLoader(
 
 
 /* ============================================================
-   LOAD MODEL
+   LOAD GLB
+
+   v=3 เพื่อบังคับโหลดไฟล์ใหม่
 ============================================================ */
 
 loader.load(
 
-    "https://supawitphumpurk.github.io/Shushifull/Shushi.glb?v=2",
+    "https://supawitphumpurk.github.io/Shushifull/Shushi.glb?v=3",
 
 
     function (gltf) {
@@ -463,7 +371,7 @@ loader.load(
 
 
         /* ====================================================
-           MODEL ROTATION
+           ROTATION
         ==================================================== */
 
         model.rotation.y =
@@ -471,7 +379,7 @@ loader.load(
 
 
         /* ====================================================
-           TRAVERSE MODEL
+           TRAVERSE
         ==================================================== */
 
         model.traverse(
@@ -493,9 +401,7 @@ loader.load(
                 const originalMap =
 
                     node.material
-
                         ? node.material.map
-
                         : null;
 
 
@@ -506,41 +412,91 @@ loader.load(
 
                         ? node.material.color.clone()
 
-                        : new THREE.Color(
-                            0xffffff
-                        );
+                        : new THREE.Color(0xffffff);
 
 
                 /* =================================================
-                   PLANE.028 / PLANE.029
+                   ชื่อ Object
 
-                   ทำเป็นสีดำ
+                   รองรับทั้ง
 
-                   Plane.028 = About Back
-                   Plane.029 = Menu Back
+                   Plane.028
+                   Plane028
+
+                   Plane.029
+                   Plane029
                 ================================================= */
 
-                if (
+                const isBack028 =
 
                     node.name === "Plane.028" ||
-                    node.name === "Plane.029"
+                    node.name === "Plane028";
 
-                ) {
+
+                const isBack029 =
+
+                    node.name === "Plane.029" ||
+                    node.name === "Plane029";
+
+
+                /* =================================================
+                   BACK BUTTON 028
+
+                   บังคับเป็นสีดำ
+                ================================================= */
+
+                if (isBack028) {
+
+
+                    aboutBackButtonObj =
+                        node;
+
 
                     node.material =
-
                         new THREE.MeshStandardMaterial({
 
-                            color:
-                                0x000000,
+                            color: 0x000000,
 
-                            metalness:
-                                0.2,
+                            metalness: 0.0,
 
-                            roughness:
-                                0.7
+                            roughness: 0.8
 
                         });
+
+
+                    node.material.needsUpdate =
+                        true;
+
+                }
+
+
+                /* =================================================
+                   BACK BUTTON 029
+
+                   บังคับเป็นสีดำ
+                ================================================= */
+
+                if (isBack029) {
+
+
+                    menuBackButtonObj =
+                        node;
+
+
+                    node.material =
+                        new THREE.MeshStandardMaterial({
+
+                            color: 0x000000,
+
+                            metalness: 0.0,
+
+                            roughness: 0.8
+
+                        });
+
+
+                    node.material.needsUpdate =
+                        true;
 
                 }
 
@@ -559,7 +515,6 @@ loader.load(
 
 
                     node.material =
-
                         new THREE.MeshStandardMaterial({
 
                             map:
@@ -593,7 +548,6 @@ loader.load(
 
 
                     node.material =
-
                         new THREE.MeshToonMaterial({
 
                             map:
@@ -612,7 +566,6 @@ loader.load(
 
                 /* =================================================
                    MENU BUTTON
-
                    Plane025
                 ================================================= */
 
@@ -631,7 +584,6 @@ loader.load(
 
                 /* =================================================
                    ABOUT BUTTON
-
                    Plane026
                 ================================================= */
 
@@ -650,7 +602,6 @@ loader.load(
 
                 /* =================================================
                    PHOTO BUTTON
-
                    Plane027
                 ================================================= */
 
@@ -669,7 +620,6 @@ loader.load(
 
                 /* =================================================
                    MENU TARGET
-
                    Plane016
                 ================================================= */
 
@@ -688,7 +638,6 @@ loader.load(
 
                 /* =================================================
                    ABOUT TARGET
-
                    Plane017
                 ================================================= */
 
@@ -707,7 +656,6 @@ loader.load(
 
                 /* =================================================
                    PHOTO TARGET
-
                    Plane024
                 ================================================= */
 
@@ -725,164 +673,130 @@ loader.load(
 
 
                 /* =================================================
-                   MENU BACK BUTTON
-
-                   Plane.029
-                ================================================= */
-
-                if (
-
-                    node.name ===
-                    "Plane.029"
-
-                ) {
-
-                    menuBackButtonObj =
-                        node;
-
-                }
-
-
-                /* =================================================
-                   ABOUT BACK BUTTON
-
-                   Plane.028
-                ================================================= */
-
-                if (
-
-                    node.name ===
-                    "Plane.028"
-
-                ) {
-
-                    aboutBackButtonObj =
-                        node;
-
-                }
-
-
-                /* =================================================
                    CURTAIN
                 ================================================= */
 
                 if (
 
-                    CURTAIN_OBJECT_NAMES.includes(
-                        node.name
-                    )
+                    node.name ===
+                    "Plane011"
 
                 ) {
 
 
-                    node.material.onBeforeCompile =
-
-                        function (shader) {
+                    if (node.material) {
 
 
-                            shader.uniforms.uTime = {
+                        node.material.onBeforeCompile =
 
-                                value: 0
+                            function (shader) {
+
+
+                                shader.uniforms.uTime = {
+
+                                    value: 0
+
+                                };
+
+
+                                shader.vertexShader =
+
+                                    "uniform float uTime;\n" +
+
+                                    shader.vertexShader;
+
+
+                                shader.vertexShader =
+
+                                    shader.vertexShader.replace(
+
+                                        "#include <begin_vertex>",
+
+                                        `
+
+                                        #include <begin_vertex>
+
+                                        float waveStrength = 0.04;
+
+                                        float waveSpeed = 2.0;
+
+                                        float waveFreq = 6.0;
+
+                                        float hangFactor =
+
+                                            clamp(
+
+                                                1.0 -
+                                                (position.y + 1.0),
+
+                                                0.0,
+                                                1.0
+
+                                            );
+
+
+                                        transformed.x +=
+
+                                            sin(
+
+                                                position.y *
+                                                waveFreq +
+
+                                                uTime *
+                                                waveSpeed
+
+                                            )
+
+                                            *
+
+                                            waveStrength
+
+                                            *
+
+                                            hangFactor;
+
+
+                                        transformed.z +=
+
+                                            cos(
+
+                                                position.y *
+                                                waveFreq *
+                                                0.7 +
+
+                                                uTime *
+                                                waveSpeed
+
+                                            )
+
+                                            *
+
+                                            waveStrength
+
+                                            *
+
+                                            0.5
+
+                                            *
+
+                                            hangFactor;
+
+                                        `
+
+                                    );
+
+
+                                curtainShaders.push(
+                                    shader
+                                );
 
                             };
 
 
-                            shader.vertexShader =
+                        node.material.needsUpdate =
+                            true;
 
-                                "uniform float uTime;\n" +
-
-                                shader.vertexShader;
-
-
-                            shader.vertexShader =
-
-                                shader.vertexShader.replace(
-
-                                    "#include <begin_vertex>",
-
-                                    `
-
-                                    #include <begin_vertex>
-
-                                    float waveStrength = 0.04;
-
-                                    float waveSpeed = 2.0;
-
-                                    float waveFreq = 6.0;
-
-                                    float hangFactor =
-
-                                        clamp(
-
-                                            1.0 -
-                                            (position.y + 1.0),
-
-                                            0.0,
-                                            1.0
-
-                                        );
-
-
-                                    transformed.x +=
-
-                                        sin(
-
-                                            position.y *
-                                            waveFreq +
-
-                                            uTime *
-                                            waveSpeed
-
-                                        )
-
-                                        *
-
-                                        waveStrength
-
-                                        *
-
-                                        hangFactor;
-
-
-                                    transformed.z +=
-
-                                        cos(
-
-                                            position.y *
-                                            waveFreq *
-                                            0.7 +
-
-                                            uTime *
-                                            waveSpeed
-
-                                        )
-
-                                        *
-
-                                        waveStrength
-
-                                        *
-
-                                        0.5
-
-                                        *
-
-                                        hangFactor;
-
-                                    `
-
-                                );
-
-
-                            curtainShaders.push(
-                                shader
-                            );
-
-                        };
-
-
-                    node.material.needsUpdate =
-                        true;
+                    }
 
                 }
 
@@ -892,14 +806,12 @@ loader.load(
 
 
         /* ====================================================
-           MODEL CENTER
+           CENTER MODEL
         ==================================================== */
 
         const box =
             new THREE.Box3()
-                .setFromObject(
-                    model
-                );
+                .setFromObject(model);
 
 
         const center =
@@ -984,75 +896,34 @@ loader.load(
         ==================================================== */
 
         defaultCamPos.copy(
-
             camera.position
-
         );
 
 
         defaultCamTarget.copy(
-
             controls.target
-
         );
 
 
-        /* ====================================================
-           ADD MODEL
-        ==================================================== */
-
         scene.add(
-
             model
-
         );
 
 
         /* ====================================================
            DEBUG
-
-           ดูใน F12 > Console ว่าเจอปุ่มหรือไม่
         ==================================================== */
 
         console.log(
-            "MENU BUTTON:",
-            menuButtonObj
-        );
-
-        console.log(
-            "ABOUT BUTTON:",
-            aboutButtonObj
-        );
-
-        console.log(
-            "PHOTO BUTTON:",
-            photoButtonObj
-        );
-
-        console.log(
-            "MENU TARGET:",
-            menuTargetObj
-        );
-
-        console.log(
-            "ABOUT TARGET:",
-            aboutTargetObj
-        );
-
-        console.log(
-            "PHOTO TARGET:",
-            photoTargetObj
-        );
-
-        console.log(
-            "MENU BACK Plane.029:",
+            "MENU BACK =",
             menuBackButtonObj
         );
 
         console.log(
-            "ABOUT BACK Plane.028:",
+            "ABOUT BACK =",
             aboutBackButtonObj
         );
+
 
     },
 
@@ -1088,13 +959,12 @@ const mouse =
 
 
 /* ============================================================
-   ตรวจว่า Object ที่คลิกเป็นตัวเดียวกัน
-   หรือเป็นลูกของ Object นั้น
+   CHECK OBJECT / PARENT
 ============================================================ */
 
-function isHitObject(
+function isObjectOrChild(
 
-    hit,
+    object,
     target
 
 ) {
@@ -1108,17 +978,14 @@ function isHitObject(
 
 
     let current =
-        hit;
+        object;
 
 
     while (current) {
 
 
         if (
-
-            current ===
-            target
-
+            current === target
         ) {
 
             return true;
@@ -1138,7 +1005,7 @@ function isHitObject(
 
 
 /* ============================================================
-   LEFT CLICK
+   CLICK
 ============================================================ */
 
 renderer.domElement.addEventListener(
@@ -1199,9 +1066,7 @@ renderer.domElement.addEventListener(
 
 
         if (
-
             intersects.length === 0
-
         ) {
 
             return;
@@ -1209,163 +1074,174 @@ renderer.domElement.addEventListener(
         }
 
 
-        const hit =
-            intersects[0].object;
-
-
         /* ====================================================
-           MENU
+           IMPORTANT
 
-           Plane025
-           ↓
-           Plane016
+           เช็กปุ่มกลับก่อน
+           เพราะบางครั้งมี Object อื่นบังอยู่
         ==================================================== */
 
-        if (
+        for (
 
-            isHitObject(
+            let i = 0;
 
-                hit,
+            i < intersects.length;
 
-                menuButtonObj
-
-            )
+            i++
 
         ) {
 
-            showMenu();
 
-            return;
-
-        }
+            const hit =
+                intersects[i].object;
 
 
-        /* ====================================================
-           ABOUT ME
-
-           Plane026
-           ↓
-           Plane017
-        ==================================================== */
-
-        if (
-
-            isHitObject(
-
-                hit,
-
-                aboutButtonObj
-
-            )
-
-        ) {
-
-            showAboutMe();
-
-            return;
-
-        }
-
-
-        /* ====================================================
-           PHOTO
-
-           Plane027
-           ↓
-           Plane024
-        ==================================================== */
-
-        if (
-
-            isHitObject(
-
-                hit,
-
-                photoButtonObj
-
-            )
-
-        ) {
-
-            showPhoto();
-
-            return;
-
-        }
-
-
-        /* ====================================================
-           MENU BACK
-
-           Plane.029
-           ↓
-           หน้าหลัก
-        ==================================================== */
-
-        if (
-
-            isHitObject(
-
-                hit,
-
-                menuBackButtonObj
-
-            )
-
-        ) {
-
+            /* =================================================
+               MENU BACK
+               Plane.029 / Plane029
+            ================================================= */
 
             if (
 
-                currentPage ===
-                "menu"
+                isObjectOrChild(
+
+                    hit,
+
+                    menuBackButtonObj
+
+                )
 
             ) {
 
-                goBack();
+
+                if (
+                    currentPage === "menu"
+                ) {
+
+                    goBack();
+
+                }
+
+
+                return;
 
             }
 
 
-            return;
+            /* =================================================
+               ABOUT BACK
+               Plane.028 / Plane028
+            ================================================= */
+
+            if (
+
+                isObjectOrChild(
+
+                    hit,
+
+                    aboutBackButtonObj
+
+                )
+
+            ) {
+
+
+                if (
+                    currentPage === "about"
+                ) {
+
+                    goBack();
+
+                }
+
+
+                return;
+
+            }
 
         }
 
 
         /* ====================================================
-           ABOUT BACK
-
-           Plane.028
-           ↓
-           หน้าหลัก
+           ปุ่มหลัก
         ==================================================== */
 
-        if (
+        for (
 
-            isHitObject(
+            let i = 0;
 
-                hit,
+            i < intersects.length;
 
-                aboutBackButtonObj
-
-            )
+            i++
 
         ) {
 
 
+            const hit =
+                intersects[i].object;
+
+
+            /* MENU */
+
             if (
 
-                currentPage ===
-                "about"
+                isObjectOrChild(
+
+                    hit,
+
+                    menuButtonObj
+
+                )
 
             ) {
 
-                goBack();
+                showMenu();
+
+                return;
 
             }
 
 
-            return;
+            /* ABOUT */
+
+            if (
+
+                isObjectOrChild(
+
+                    hit,
+
+                    aboutButtonObj
+
+                )
+
+            ) {
+
+                showAboutMe();
+
+                return;
+
+            }
+
+
+            /* PHOTO */
+
+            if (
+
+                isObjectOrChild(
+
+                    hit,
+
+                    photoButtonObj
+
+                )
+
+            ) {
+
+                showPhoto();
+
+                return;
+
+            }
 
         }
 
@@ -1390,7 +1266,7 @@ function focusOnObject(
     if (!object) {
 
         console.warn(
-            "ไม่พบ Target Object"
+            "ไม่พบ Target"
         );
 
         return;
@@ -1400,9 +1276,7 @@ function focusOnObject(
 
     const box =
         new THREE.Box3()
-            .setFromObject(
-                object
-            );
+            .setFromObject(object);
 
 
     const center =
@@ -1507,9 +1381,7 @@ function flyCameraTo(
     if (flyAnimation) {
 
         cancelAnimationFrame(
-
             flyAnimation
-
         );
 
     }
@@ -1604,9 +1476,7 @@ function flyCameraTo(
 
 
         if (
-
             progress < 1
-
         ) {
 
 
@@ -1624,23 +1494,17 @@ function flyCameraTo(
 
 
             camera.position.copy(
-
                 targetPosition
-
             );
 
 
             controls.target.copy(
-
                 targetLookAt
-
             );
 
 
             camera.lookAt(
-
                 targetLookAt
-
             );
 
 
@@ -1668,16 +1532,10 @@ function flyCameraTo(
 
 
 /* ============================================================
-   SHOW MENU
-
-   Plane025 → Plane016
+   MENU
 ============================================================ */
 
 function showMenu() {
-
-
-    viewingMode =
-        true;
 
 
     currentPage =
@@ -1696,16 +1554,10 @@ function showMenu() {
 
 
 /* ============================================================
-   SHOW ABOUT
-
-   Plane026 → Plane017
+   ABOUT ME
 ============================================================ */
 
 function showAboutMe() {
-
-
-    viewingMode =
-        true;
 
 
     currentPage =
@@ -1724,16 +1576,10 @@ function showAboutMe() {
 
 
 /* ============================================================
-   SHOW PHOTO
-
-   Plane027 → Plane024
+   PHOTO
 ============================================================ */
 
 function showPhoto() {
-
-
-    viewingMode =
-        true;
 
 
     currentPage =
@@ -1753,23 +1599,13 @@ function showPhoto() {
 
 /* ============================================================
    GO BACK
-
-   กลับหน้าหลัก
 ============================================================ */
 
 function goBack() {
 
 
-    viewingMode =
-        false;
-
-
     currentPage =
         null;
-
-
-    controls.enabled =
-        false;
 
 
     flyCameraTo(
@@ -1786,40 +1622,25 @@ function goBack() {
 
 
 /* ============================================================
-   ANIMATION LOOP
+   ANIMATION
 ============================================================ */
 
 function animate() {
 
 
     requestAnimationFrame(
-
         animate
-
     );
 
 
-    /* ========================================================
-       Orbit Controls
-
-       คลิกซ้ายลาก = หมุน
-       Scroll = Zoom
-    ======================================================== */
-
     if (
-
         controls.enabled
-
     ) {
 
         controls.update();
 
     }
 
-
-    /* ========================================================
-       CURTAIN ANIMATION
-    ======================================================== */
 
     const time =
         clock.getElapsedTime();
@@ -1829,7 +1650,6 @@ function animate() {
 
         function (shader) {
 
-
             shader.uniforms.uTime.value =
                 time;
 
@@ -1837,10 +1657,6 @@ function animate() {
 
     );
 
-
-    /* ========================================================
-       RENDER
-    ======================================================== */
 
     renderer.render(
 
@@ -1857,7 +1673,7 @@ animate();
 
 
 /* ============================================================
-   WINDOW RESIZE
+   RESIZE
 ============================================================ */
 
 window.addEventListener(
