@@ -343,26 +343,17 @@ let photoButtonObj = null;
    จุดปลายทาง
 ============================================================ */
 
-/*
-   MENU
-   Plane025 → Plane029
-*/
+/* MENU → Plane029 */
 
 let menuTargetObj = null;
 
 
-/*
-   ABOUT ME
-   Plane026 → Plane028
-*/
+/* ABOUT ME → Plane028 */
 
 let aboutTargetObj = null;
 
 
-/*
-   PHOTO
-   Plane027 → Plane024
-*/
+/* PHOTO → Plane024 */
 
 let photoTargetObj = null;
 
@@ -511,7 +502,46 @@ loader.load(
 
 
                 /* =================================================
-                   PBR MATERIAL
+                   PLANE BUTTONS = BLACK
+                   
+                   Plane025 = MENU
+                   Plane026 = ABOUT ME
+                   Plane027 = PHOTO
+                   Plane028 = BACK
+                   Plane029 = BACK
+                ================================================= */
+
+                if (
+
+                    node.name === "Plane025" ||
+                    node.name === "Plane026" ||
+                    node.name === "Plane027" ||
+                    node.name === "Plane028" ||
+                    node.name === "Plane029"
+
+                ) {
+
+
+                    node.material =
+
+                        new THREE.MeshStandardMaterial({
+
+                            color:
+                                0x000000,
+
+                            metalness:
+                                0.2,
+
+                            roughness:
+                                0.7
+
+                        });
+
+                }
+
+
+                /* =================================================
+                   PBR
                 ================================================= */
 
                 if (
@@ -576,7 +606,7 @@ loader.load(
 
 
                 /* =================================================
-                   PLANE 025
+                   PLANE025
                    MENU
                 ================================================= */
 
@@ -594,7 +624,7 @@ loader.load(
 
 
                 /* =================================================
-                   PLANE 026
+                   PLANE026
                    ABOUT ME
                 ================================================= */
 
@@ -612,7 +642,7 @@ loader.load(
 
 
                 /* =================================================
-                   PLANE 027
+                   PLANE027
                    PHOTO
                 ================================================= */
 
@@ -630,8 +660,8 @@ loader.load(
 
 
                 /* =================================================
-                   PLANE 029
-                   MENU TARGET
+                   PLANE029
+                   MENU BACK
                 ================================================= */
 
                 if (
@@ -648,8 +678,8 @@ loader.load(
 
 
                 /* =================================================
-                   PLANE 028
-                   ABOUT TARGET
+                   PLANE028
+                   ABOUT BACK
                 ================================================= */
 
                 if (
@@ -666,7 +696,7 @@ loader.load(
 
 
                 /* =================================================
-                   PLANE 024
+                   PLANE024
                    PHOTO TARGET
                 ================================================= */
 
@@ -979,11 +1009,6 @@ renderer.domElement.addEventListener(
         }
 
 
-        /*
-         * ถ้ากำลังบินกล้องอยู่
-         * ไม่รับคลิก
-         */
-
         if (flyAnimation) {
 
             return;
@@ -1044,6 +1069,7 @@ renderer.domElement.addEventListener(
 
         /* ====================================================
            MENU
+
            Plane025 → Plane029
         ==================================================== */
 
@@ -1063,6 +1089,7 @@ renderer.domElement.addEventListener(
 
         /* ====================================================
            ABOUT ME
+
            Plane026 → Plane028
         ==================================================== */
 
@@ -1082,7 +1109,8 @@ renderer.domElement.addEventListener(
 
         /* ====================================================
            PHOTO
-           Plane027
+
+           Plane027 → Plane024
         ==================================================== */
 
         if (
@@ -1100,7 +1128,8 @@ renderer.domElement.addEventListener(
 
 
         /* ====================================================
-           BACK MENU
+           MENU BACK
+
            Plane029
         ==================================================== */
 
@@ -1119,7 +1148,8 @@ renderer.domElement.addEventListener(
 
 
         /* ====================================================
-           BACK ABOUT
+           ABOUT BACK
+
            Plane028
         ==================================================== */
 
@@ -1449,12 +1479,6 @@ function showMenu() {
         "menu";
 
 
-    /*
-     * Plane025
-     * ↓
-     * Plane029
-     */
-
     focusOnObject(
 
         menuTargetObj,
@@ -1480,12 +1504,6 @@ function showAboutMe() {
     currentPage =
         "about";
 
-
-    /*
-     * Plane026
-     * ↓
-     * Plane028
-     */
 
     focusOnObject(
 
@@ -1589,7 +1607,7 @@ function animate() {
 
 
     /* ========================================================
-       CURTAIN
+       CURTAIN ANIMATION
     ======================================================== */
 
     const time =
