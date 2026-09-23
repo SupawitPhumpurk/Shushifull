@@ -3,14 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <title>3D Model - Shushi</title>
 
     <style>
+
         body {
             margin: 0;
             overflow: hidden;
             background-color: #1a1a1a;
-            font-family: 'Sarabun', 'Segoe UI', sans-serif;
         }
 
         canvas {
@@ -19,89 +20,33 @@
             height: 100vh;
         }
 
-        /* ข้อความด้านบน */
-        #hint {
-            position: fixed;
-            top: 14px;
-            left: 50%;
-            transform: translateX(-50%);
-            color: rgba(255,255,255,0.7);
-            font-size: 14px;
-            z-index: 5;
-            pointer-events: none;
-            text-align: center;
-            background: rgba(0,0,0,0.35);
-            padding: 8px 14px;
-            border-radius: 8px;
-        }
-
-        /* Debug */
-        #debugBox {
-            position: fixed;
-            top: 14px;
-            right: 14px;
-            background: rgba(0,0,0,0.6);
-            color: #0f0;
-            font-family: monospace;
-            font-size: 13px;
-            padding: 8px 12px;
-            border-radius: 8px;
-            z-index: 30;
-            display: none;
-        }
     </style>
 </head>
 
 <body>
 
-    <div id="hint">
-        คลิก Menu / About Me / Photo เพื่อดูโมเดล
-    </div>
-
-    <div id="debugBox"></div>
-
-
-    <!-- ============================================================
-         Three.js
-    ============================================================ -->
-
+    <!-- Three.js -->
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
 
+    <!-- GLTF Loader -->
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
 
+    <!-- Orbit Controls -->
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 
+    <!-- Draco Loader -->
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/DRACOLoader.js"></script>
 
 
     <script>
 
         /* ============================================================
-           ตั้งค่า
+           ตั้งค่าผ้าม่าน
         ============================================================ */
 
         const CURTAIN_OBJECT_NAMES = [
             "Plane011"
         ];
-
-
-        /* ============================================================
-           ข้อมูล Portfolio
-        ============================================================ */
-
-        const portfolioData = {
-
-            name: "ศุภวิชญ์ พุ่มพฤกษ์",
-
-            studentId: "6721601508",
-
-            major: "วิทยาการคอมพิวเตอร์",
-
-            faculty: "ศิลปศาสตร์และวิทยาศาสตร์",
-
-            bio: "เนื้อหา portfolio (ผลงาน / โปรเจกต์) จะเพิ่มเติมภายหลัง"
-
-        };
 
 
         /* ============================================================
@@ -256,11 +201,8 @@
             const shades = [
 
                 80,
-
                 140,
-
                 190,
-
                 255
 
             ];
@@ -268,20 +210,16 @@
 
             shades.forEach(
 
-                (v, i) => {
+                (value, index) => {
 
                     ctx.fillStyle =
-                        `rgb(${v},${v},${v})`;
-
+                        `rgb(${value},${value},${value})`;
 
                     ctx.fillRect(
 
-                        i,
-
+                        index,
                         0,
-
                         1,
-
                         1
 
                     );
@@ -319,13 +257,15 @@
 
 
         /* ============================================================
-           ตัวแปร Object
+           ตัวแปรโมเดล
         ============================================================ */
 
         let modelRoot = null;
 
 
-        /* ปุ่ม 3 จุด */
+        /* ============================================================
+           ปุ่ม 3 จุด
+        ============================================================ */
 
         let menuButtonObj = null;
 
@@ -334,7 +274,9 @@
         let photoButtonObj = null;
 
 
-        /* จุด Target */
+        /* ============================================================
+           จุด Target สำหรับกล้อง
+        ============================================================ */
 
         let menuTargetObj = null;
 
@@ -343,7 +285,9 @@
         let photoTargetObj = null;
 
 
-        /* ตำแหน่งกล้องเดิม */
+        /* ============================================================
+           ตำแหน่งกล้องเริ่มต้น
+        ============================================================ */
 
         let defaultCamPos =
             new THREE.Vector3();
@@ -353,12 +297,16 @@
             new THREE.Vector3();
 
 
-        /* กำลังดูจุดพิเศษอยู่หรือไม่ */
+        /* ============================================================
+           สถานะการดูจุด
+        ============================================================ */
 
         let viewingMode = false;
 
 
-        /* Shader ผ้าม่าน */
+        /* ============================================================
+           Animation ผ้าม่าน
+        ============================================================ */
 
         const curtainShaders = [];
 
@@ -368,12 +316,16 @@
 
 
         /* ============================================================
-           โหลดโมเดล
+           GLTF Loader
         ============================================================ */
 
         const loader =
             new THREE.GLTFLoader();
 
+
+        /* ============================================================
+           Draco Loader
+        ============================================================ */
 
         const dracoLoader =
             new THREE.DRACOLoader();
@@ -391,12 +343,16 @@
         );
 
 
+        /* ============================================================
+           โหลดโมเดล
+        ============================================================ */
+
         loader.load(
 
             'https://supawitphumpurk.github.io/Shushifull/Shushi.glb?v=',
 
 
-            (gltf) => {
+            function (gltf) {
 
                 const model =
                     gltf.scene;
@@ -406,35 +362,30 @@
                     model;
 
 
-                /* หมุนโมเดล */
+                /* ====================================================
+                   หมุนโมเดล
+                ==================================================== */
 
                 model.rotation.y =
                     -Math.PI / 2;
 
 
-                /* รายชื่อ Mesh */
-
-                const allMeshNames = [];
-
-
                 /* ====================================================
-                   Traverse
+                   ตรวจทุก Object
                 ==================================================== */
 
                 model.traverse(
 
-                    (node) => {
+                    function (node) {
 
-                        if (!node.isMesh)
+                        if (!node.isMesh) {
                             return;
+                        }
 
 
-                        allMeshNames.push(
-                            node.name
-                        );
-
-
-                        /* Material เดิม */
+                        /* =================================================
+                           Material เดิม
+                        ================================================= */
 
                         const originalMap =
                             node.material
@@ -583,7 +534,7 @@
 
 
                         /* =================================================
-                           Target About
+                           Target About Me
                         ================================================= */
 
                         if (
@@ -617,7 +568,7 @@
 
 
                         /* =================================================
-                           Shader ผ้าม่าน
+                           ผ้าม่าน
                         ================================================= */
 
                         if (
@@ -629,7 +580,7 @@
                         ) {
 
                             node.material.onBeforeCompile =
-                                (shader) => {
+                                function (shader) {
 
                                     shader.uniforms.uTime = {
                                         value: 0
@@ -730,7 +681,7 @@
 
 
                 /* ====================================================
-                   จัดขนาดโมเดล
+                   หาขนาดโมเดล
                 ==================================================== */
 
                 const box =
@@ -752,22 +703,24 @@
                     );
 
 
+                /* ====================================================
+                   จัดโมเดลให้อยู่ตรงกลาง
+                ==================================================== */
+
                 model.position.sub(
                     center
                 );
 
 
                 /* ====================================================
-                   คำนวณระยะกล้อง
+                   คำนวณตำแหน่งกล้อง
                 ==================================================== */
 
                 const maxDim =
                     Math.max(
 
                         size.x,
-
                         size.y,
-
                         size.z
 
                     );
@@ -775,7 +728,8 @@
 
                 const fov =
                     camera.fov *
-                    (Math.PI / 180);
+                    Math.PI /
+                    180;
 
 
                 let cameraZ =
@@ -796,12 +750,14 @@
                 cameraZ *= 1.35;
 
 
+                /* ====================================================
+                   ตั้งกล้องเริ่มต้น
+                ==================================================== */
+
                 camera.position.set(
 
                     0,
-
                     0,
-
                     cameraZ
 
                 );
@@ -810,9 +766,7 @@
                 controls.target.set(
 
                     0,
-
                     0,
-
                     0
 
                 );
@@ -822,7 +776,7 @@
 
 
                 /* ====================================================
-                   จำตำแหน่งกล้องเดิม
+                   บันทึกตำแหน่งกล้องเดิม
                 ==================================================== */
 
                 defaultCamPos.copy(
@@ -835,86 +789,13 @@
                 );
 
 
+                /* ====================================================
+                   เพิ่มโมเดลเข้า Scene
+                ==================================================== */
+
                 scene.add(
                     model
                 );
-
-
-                /* ====================================================
-                   Debug Console
-                ==================================================== */
-
-                console.log(
-                    'รายชื่อ Mesh:',
-                    allMeshNames
-                );
-
-
-                console.log(
-                    'Menu:',
-                    menuButtonObj
-                        ? menuButtonObj.name
-                        : 'ไม่เจอ'
-                );
-
-
-                console.log(
-                    'About:',
-                    aboutButtonObj
-                        ? aboutButtonObj.name
-                        : 'ไม่เจอ'
-                );
-
-
-                console.log(
-                    'Photo:',
-                    photoButtonObj
-                        ? photoButtonObj.name
-                        : 'ไม่เจอ'
-                );
-
-
-                console.log(
-                    'Menu Target:',
-                    menuTargetObj
-                        ? menuTargetObj.name
-                        : 'ไม่เจอ'
-                );
-
-
-                console.log(
-                    'About Target:',
-                    aboutTargetObj
-                        ? aboutTargetObj.name
-                        : 'ไม่เจอ'
-                );
-
-
-                console.log(
-                    'Photo Target:',
-                    photoTargetObj
-                        ? photoTargetObj.name
-                        : 'ไม่เจอ'
-                );
-
-
-                if (
-
-                    !menuButtonObj ||
-
-                    !aboutButtonObj ||
-
-                    !photoButtonObj
-
-                ) {
-
-                    document.getElementById(
-                        'hint'
-                    ).innerText =
-
-                        'บางปุ่มยังไม่เจอ object ในโมเดล — เปิด Console (F12) ดูรายชื่อทั้งหมด';
-
-                }
 
             },
 
@@ -922,14 +803,10 @@
             undefined,
 
 
-            (error) => {
+            function (error) {
 
                 console.error(
-
-                    'เกิดข้อผิดพลาดในการโหลดโมเดล:',
-
                     error
-
                 );
 
             }
@@ -951,33 +828,32 @@
 
         /* ============================================================
            คลิกซ้าย
-           ใช้สำหรับกดปุ่ม Menu / About / Photo
+           ใช้เลือก Menu / About Me / Photo
         ============================================================ */
 
         renderer.domElement.addEventListener(
 
             'click',
 
-            (event) => {
-
+            function (event) {
 
                 /* ถ้ากำลังดูอยู่
                    คลิกซ้ายไม่ทำอะไร
-                   ต้องคลิกขวาเพื่อออก
                 */
 
                 if (viewingMode) {
-
                     return;
-
                 }
 
 
-                if (!modelRoot)
+                if (!modelRoot) {
                     return;
+                }
 
 
-                /* Mouse Position */
+                /* ====================================================
+                   ตำแหน่ง Mouse
+                ==================================================== */
 
                 mouse.x =
 
@@ -995,7 +871,9 @@
                     ) * 2 + 1;
 
 
-                /* Raycaster */
+                /* ====================================================
+                   Raycaster
+                ==================================================== */
 
                 raycaster.setFromCamera(
 
@@ -1007,7 +885,6 @@
 
 
                 const intersects =
-
                     raycaster.intersectObject(
 
                         modelRoot,
@@ -1030,32 +907,9 @@
                     intersects[0].object;
 
 
-                /* Debug */
-
-                const debugBox =
-                    document.getElementById(
-                        'debugBox'
-                    );
-
-
-                debugBox.style.display =
-                    'block';
-
-
-                debugBox.innerText =
-                    'คลิกโดน: ' + hit.name;
-
-
-                console.log(
-
-                    'คลิกโดน object ชื่อ:',
-
-                    hit.name
-
-                );
-
-
-                /* Menu */
+                /* ====================================================
+                   Menu
+                ==================================================== */
 
                 if (
                     hit === menuButtonObj
@@ -1066,7 +920,9 @@
                 }
 
 
-                /* About Me */
+                /* ====================================================
+                   About Me
+                ==================================================== */
 
                 else if (
                     hit === aboutButtonObj
@@ -1077,7 +933,9 @@
                 }
 
 
-                /* Photo */
+                /* ====================================================
+                   Photo
+                ==================================================== */
 
                 else if (
                     hit === photoButtonObj
@@ -1101,22 +959,17 @@
 
             'contextmenu',
 
-            (event) => {
+            function (event) {
 
-
-                /* ปิดเมนูคลิกขวาของ Browser */
+                /* ป้องกันเมนู Browser */
 
                 event.preventDefault();
 
 
-                /* ถ้าไม่ได้อยู่ในโหมดดู
-                   ไม่ต้องทำอะไร
-                */
+                /* ถ้าไม่ได้อยู่ในโหมดดู */
 
                 if (!viewingMode) {
-
                     return;
-
                 }
 
 
@@ -1125,18 +978,9 @@
                 viewingMode = false;
 
 
-                /* กล้องกลับตำแหน่งเดิม */
+                /* กลับกล้อง */
 
                 resetCamera();
-
-
-                /* เปลี่ยนข้อความ */
-
-                document.getElementById(
-                    'hint'
-                ).innerText =
-
-                    'คลิก Menu / About Me / Photo เพื่อดูโมเดล';
 
             }
 
@@ -1147,26 +991,27 @@
            Camera Focus
         ============================================================ */
 
-        let flyAnim = null;
-
-
         function focusOnObject(
 
-            obj,
+            object,
 
             distanceMultiplier = 2.2
 
         ) {
 
-
-            if (!obj)
+            if (!object) {
                 return;
+            }
 
+
+            /* ========================================================
+               หาขนาด Object
+            ======================================================== */
 
             const box =
                 new THREE.Box3()
                     .setFromObject(
-                        obj
+                        object
                     );
 
 
@@ -1186,17 +1031,18 @@
                 Math.max(
 
                     size.x,
-
                     size.y,
-
                     size.z,
-
                     0.2
 
                 );
 
 
-            const dir =
+            /* ========================================================
+               ทิศทางกล้อง
+            ======================================================== */
+
+            const direction =
                 new THREE.Vector3()
                     .subVectors(
 
@@ -1208,24 +1054,30 @@
                     .normalize();
 
 
-            const targetCamPos =
-                center
-                    .clone()
-                    .add(
+            /* ========================================================
+               ตำแหน่งกล้องใหม่
+            ======================================================== */
 
-                        dir.multiplyScalar(
+            const targetCameraPosition =
+                center.clone().add(
 
-                            maxDim *
-                            distanceMultiplier
+                    direction.multiplyScalar(
 
-                        )
+                        maxDim *
+                        distanceMultiplier
 
-                    );
+                    )
 
+                );
+
+
+            /* ========================================================
+               บินกล้อง
+            ======================================================== */
 
             flyCameraTo(
 
-                targetCamPos,
+                targetCameraPosition,
 
                 center
 
@@ -1235,30 +1087,34 @@
 
 
         /* ============================================================
-           Camera Fly
+           Camera Animation
         ============================================================ */
+
+        let flyAnimation = null;
+
 
         function flyCameraTo(
 
-            targetPos,
+            targetPosition,
 
-            targetLook,
+            targetLookAt,
 
             duration = 900
 
         ) {
 
+            /* ยกเลิก Animation เดิม */
 
-            if (flyAnim) {
+            if (flyAnimation) {
 
                 cancelAnimationFrame(
-                    flyAnim.id
+                    flyAnimation
                 );
 
             }
 
 
-            const startPos =
+            const startPosition =
                 camera.position.clone();
 
 
@@ -1270,17 +1126,21 @@
                 performance.now();
 
 
+            /* ปิดการควบคุมชั่วคราว */
+
             controls.enabled = false;
 
 
-            function step(now) {
+            function animateCamera(now) {
+
+                const elapsed =
+                    now - startTime;
 
 
-                const t =
-
+                const progress =
                     Math.min(
 
-                        (now - startTime) /
+                        elapsed /
                         duration,
 
                         1
@@ -1288,13 +1148,19 @@
                     );
 
 
+                /* ====================================================
+                   Ease In Out
+                ==================================================== */
+
                 const ease =
 
-                    t < 0.5
+                    progress < 0.5
 
                         ?
 
-                        2 * t * t
+                        2 *
+                        progress *
+                        progress
 
                         :
 
@@ -1302,29 +1168,39 @@
 
                         Math.pow(
 
-                            -2 * t + 2,
+                            -2 *
+                            progress +
+                            2,
 
                             2
 
                         ) / 2;
 
 
+                /* ====================================================
+                   Camera Position
+                ==================================================== */
+
                 camera.position.lerpVectors(
 
-                    startPos,
+                    startPosition,
 
-                    targetPos,
+                    targetPosition,
 
                     ease
 
                 );
 
 
+                /* ====================================================
+                   Camera Target
+                ==================================================== */
+
                 controls.target.lerpVectors(
 
                     startTarget,
 
-                    targetLook,
+                    targetLookAt,
 
                     ease
 
@@ -1334,16 +1210,16 @@
                 controls.update();
 
 
-                if (t < 1) {
+                /* ====================================================
+                   ทำต่อ
+                ==================================================== */
 
-                    flyAnim = {
+                if (progress < 1) {
 
-                        id:
-                            requestAnimationFrame(
-                                step
-                            )
-
-                    };
+                    flyAnimation =
+                        requestAnimationFrame(
+                            animateCamera
+                        );
 
                 }
 
@@ -1351,29 +1227,26 @@
 
                     controls.enabled = true;
 
+                    flyAnimation = null;
+
                 }
 
             }
 
 
-            flyAnim = {
-
-                id:
-                    requestAnimationFrame(
-                        step
-                    )
-
-            };
+            flyAnimation =
+                requestAnimationFrame(
+                    animateCamera
+                );
 
         }
 
 
         /* ============================================================
-           กลับกล้อง
+           กลับกล้องตำแหน่งเดิม
         ============================================================ */
 
         function resetCamera() {
-
 
             flyCameraTo(
 
@@ -1392,15 +1265,7 @@
 
         function showMenu() {
 
-
             viewingMode = true;
-
-
-            document.getElementById(
-                'hint'
-            ).innerText =
-
-                'กำลังดู Menu — คลิกขวาเพื่อออก';
 
 
             focusOnObject(
@@ -1420,15 +1285,7 @@
 
         function showAboutMe() {
 
-
             viewingMode = true;
-
-
-            document.getElementById(
-                'hint'
-            ).innerText =
-
-                'กำลังดู About Me — คลิกขวาเพื่อออก';
 
 
             focusOnObject(
@@ -1448,15 +1305,7 @@
 
         function showPhoto() {
 
-
             viewingMode = true;
-
-
-            document.getElementById(
-                'hint'
-            ).innerText =
-
-                'กำลังดู Photo — คลิกขวาเพื่อออก';
 
 
             focusOnObject(
@@ -1476,25 +1325,39 @@
 
         function animate() {
 
+            requestAnimationFrame(
+                animate
+            );
+
+
+            /* Orbit Controls */
 
             controls.update();
 
 
-            const t =
+            /* ========================================================
+               ผ้าม่าน
+            ======================================================== */
+
+            const time =
                 clock.getElapsedTime();
 
 
             curtainShaders.forEach(
 
-                (shader) => {
+                function (shader) {
 
                     shader.uniforms.uTime.value =
-                        t;
+                        time;
 
                 }
 
             );
 
+
+            /* ========================================================
+               Render
+            ======================================================== */
 
             renderer.render(
 
@@ -1502,11 +1365,6 @@
 
                 camera
 
-            );
-
-
-            requestAnimationFrame(
-                animate
             );
 
         }
@@ -1523,8 +1381,7 @@
 
             'resize',
 
-            () => {
-
+            function () {
 
                 camera.aspect =
 
