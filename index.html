@@ -150,6 +150,7 @@ document.body.appendChild(
 
    คลิกซ้าย + ลาก = หมุน
    Scroll = Zoom
+   คลิกขวา = ไม่ใช้
 ============================================================ */
 
 const controls =
@@ -178,13 +179,9 @@ controls.enablePan =
     false;
 
 
-/* คลิกซ้ายหมุน */
-
 controls.mouseButtons.LEFT =
     THREE.MOUSE.ROTATE;
 
-
-/* ปิดคลิกขวา */
 
 controls.mouseButtons.RIGHT =
     null;
@@ -340,22 +337,30 @@ let photoButtonObj = null;
 
 
 /* ============================================================
-   จุดปลายทาง
-============================================================ */
+   TARGET เดิม
 
-/* MENU → Plane029 */
+   MENU    → Plane016
+   ABOUT   → Plane017
+   PHOTO   → Plane024
+============================================================ */
 
 let menuTargetObj = null;
 
-
-/* ABOUT ME → Plane028 */
-
 let aboutTargetObj = null;
 
-
-/* PHOTO → Plane024 */
-
 let photoTargetObj = null;
+
+
+/* ============================================================
+   ปุ่มกลับ
+
+   MENU BACK  → Plane029
+   ABOUT BACK → Plane028
+============================================================ */
+
+let menuBackButtonObj = null;
+
+let aboutBackButtonObj = null;
 
 
 /* ============================================================
@@ -379,6 +384,11 @@ let viewingMode = false;
 
 /* ============================================================
    CURRENT PAGE
+
+   null  = หน้าหลัก
+   menu  = หน้า MENU
+   about = หน้า ABOUT
+   photo = หน้า PHOTO
 ============================================================ */
 
 let currentPage = null;
@@ -502,25 +512,20 @@ loader.load(
 
 
                 /* =================================================
-                   PLANE BUTTONS = BLACK
+                   PLANE 028 / 029
                    
-                   Plane025 = MENU
-                   Plane026 = ABOUT ME
-                   Plane027 = PHOTO
-                   Plane028 = BACK
-                   Plane029 = BACK
+                   ทำเป็นสีดำ
+                   
+                   Plane028 = About Back
+                   Plane029 = Menu Back
                 ================================================= */
 
                 if (
 
-                    node.name === "Plane025" ||
-                    node.name === "Plane026" ||
-                    node.name === "Plane027" ||
                     node.name === "Plane028" ||
                     node.name === "Plane029"
 
                 ) {
-
 
                     node.material =
 
@@ -606,8 +611,8 @@ loader.load(
 
 
                 /* =================================================
-                   PLANE025
-                   MENU
+                   MENU BUTTON
+                   Plane025
                 ================================================= */
 
                 if (
@@ -624,8 +629,8 @@ loader.load(
 
 
                 /* =================================================
-                   PLANE026
-                   ABOUT ME
+                   ABOUT BUTTON
+                   Plane026
                 ================================================= */
 
                 if (
@@ -642,8 +647,8 @@ loader.load(
 
 
                 /* =================================================
-                   PLANE027
-                   PHOTO
+                   PHOTO BUTTON
+                   Plane027
                 ================================================= */
 
                 if (
@@ -660,14 +665,14 @@ loader.load(
 
 
                 /* =================================================
-                   PLANE029
-                   MENU BACK
+                   MENU TARGET เดิม
+                   Plane016
                 ================================================= */
 
                 if (
 
                     node.name ===
-                    "Plane029"
+                    "Plane016"
 
                 ) {
 
@@ -678,14 +683,14 @@ loader.load(
 
 
                 /* =================================================
-                   PLANE028
-                   ABOUT BACK
+                   ABOUT TARGET เดิม
+                   Plane017
                 ================================================= */
 
                 if (
 
                     node.name ===
-                    "Plane028"
+                    "Plane017"
 
                 ) {
 
@@ -696,8 +701,8 @@ loader.load(
 
 
                 /* =================================================
-                   PLANE024
-                   PHOTO TARGET
+                   PHOTO TARGET เดิม
+                   Plane024
                 ================================================= */
 
                 if (
@@ -708,6 +713,42 @@ loader.load(
                 ) {
 
                     photoTargetObj =
+                        node;
+
+                }
+
+
+                /* =================================================
+                   MENU BACK BUTTON
+                   Plane029
+                ================================================= */
+
+                if (
+
+                    node.name ===
+                    "Plane029"
+
+                ) {
+
+                    menuBackButtonObj =
+                        node;
+
+                }
+
+
+                /* =================================================
+                   ABOUT BACK BUTTON
+                   Plane028
+                ================================================= */
+
+                if (
+
+                    node.name ===
+                    "Plane028"
+
+                ) {
+
+                    aboutBackButtonObj =
                         node;
 
                 }
@@ -1070,7 +1111,9 @@ renderer.domElement.addEventListener(
         /* ====================================================
            MENU
 
-           Plane025 → Plane029
+           Plane025
+           ↓
+           Plane016
         ==================================================== */
 
         if (
@@ -1090,7 +1133,9 @@ renderer.domElement.addEventListener(
         /* ====================================================
            ABOUT ME
 
-           Plane026 → Plane028
+           Plane026
+           ↓
+           Plane017
         ==================================================== */
 
         if (
@@ -1110,7 +1155,9 @@ renderer.domElement.addEventListener(
         /* ====================================================
            PHOTO
 
-           Plane027 → Plane024
+           Plane027
+           ↓
+           Plane024
         ==================================================== */
 
         if (
@@ -1131,16 +1178,27 @@ renderer.domElement.addEventListener(
            MENU BACK
 
            Plane029
+           ↓
+           หน้าหลัก
         ==================================================== */
 
         if (
 
             hit ===
-            menuTargetObj
+            menuBackButtonObj
 
         ) {
 
-            goBack();
+            if (
+
+                currentPage ===
+                "menu"
+
+            ) {
+
+                goBack();
+
+            }
 
             return;
 
@@ -1151,16 +1209,27 @@ renderer.domElement.addEventListener(
            ABOUT BACK
 
            Plane028
+           ↓
+           หน้าหลัก
         ==================================================== */
 
         if (
 
             hit ===
-            aboutTargetObj
+            aboutBackButtonObj
 
         ) {
 
-            goBack();
+            if (
+
+                currentPage ===
+                "about"
+
+            ) {
+
+                goBack();
+
+            }
 
             return;
 
@@ -1465,7 +1534,9 @@ function flyCameraTo(
 
 
 /* ============================================================
-   MENU
+   SHOW MENU
+
+   Plane025 → Plane016
 ============================================================ */
 
 function showMenu() {
@@ -1491,7 +1562,9 @@ function showMenu() {
 
 
 /* ============================================================
-   ABOUT ME
+   SHOW ABOUT
+
+   Plane026 → Plane017
 ============================================================ */
 
 function showAboutMe() {
@@ -1517,7 +1590,9 @@ function showAboutMe() {
 
 
 /* ============================================================
-   PHOTO
+   SHOW PHOTO
+
+   Plane027 → Plane024
 ============================================================ */
 
 function showPhoto() {
@@ -1544,6 +1619,8 @@ function showPhoto() {
 
 /* ============================================================
    GO BACK
+
+   กลับหน้าหลัก
 ============================================================ */
 
 function goBack() {
