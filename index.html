@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>3D Model - Shushi</title>
-
     <style>
         html, body {
             margin: 0;
@@ -14,7 +13,6 @@
             overflow: hidden;
             background: #1a1a1a;
         }
-
         canvas {
             display: block;
             width: 100%;
@@ -22,7 +20,6 @@
         }
     </style>
 </head>
-
 <body>
 
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
@@ -41,144 +38,78 @@ const camera = new THREE.PerspectiveCamera(
     1000
 );
 
-const renderer = new THREE.WebGLRenderer({
-    antialias: true
-});
-
+const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setPixelRatio(window.devicePixelRatio);
 renderer.outputEncoding = THREE.sRGBEncoding;
-
 document.body.appendChild(renderer.domElement);
 
-
-// =============================
-// ORBIT CONTROLS
-// =============================
-
-const controls = new THREE.OrbitControls(
-    camera,
-    renderer.domElement
-);
-
+// Orbit Controls
+const controls = new THREE.OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
 controls.enableRotate = true;
 controls.enableZoom = true;
-controls.enablePan = false;
+controls.enablePan = true;
 
+// คลิกซ้าย = หมุน
 controls.mouseButtons.LEFT = THREE.MOUSE.ROTATE;
-controls.mouseButtons.RIGHT = null;
 
+// คลิกขวา = เลื่อน
+controls.mouseButtons.RIGHT = THREE.MOUSE.PAN;
 
-// =============================
-// LIGHT
-// =============================
+// คลิกกลาง = ปิด
+controls.mouseButtons.MIDDLE = null;
 
-const ambientLight = new THREE.AmbientLight(
-    0xffffff,
-    1.0
-);
-
+// Light
+const ambientLight = new THREE.AmbientLight(0xffffff, 1.0);
 scene.add(ambientLight);
 
-const directionalLight = new THREE.DirectionalLight(
-    0xffffff,
-    1.2
-);
-
+const directionalLight = new THREE.DirectionalLight(0xffffff, 1.2);
 directionalLight.position.set(0, 10, 10);
-
 scene.add(directionalLight);
 
-
-// =============================
-// TOON GRADIENT
-// =============================
-
+// Toon Gradient
 function createToonGradientTexture() {
-
     const canvas = document.createElement("canvas");
-
     canvas.width = 4;
     canvas.height = 1;
-
     const ctx = canvas.getContext("2d");
-
     const shades = [80, 140, 190, 255];
 
-    shades.forEach(function(value, index) {
-
-        ctx.fillStyle =
-            `rgb(${value},${value},${value})`;
-
-        ctx.fillRect(
-            index,
-            0,
-            1,
-            1
-        );
-
+    shades.forEach((value, index) => {
+        ctx.fillStyle = `rgb(${value},${value},${value})`;
+        ctx.fillRect(index, 0, 1, 1);
     });
 
-    const texture =
-        new THREE.CanvasTexture(canvas);
-
-    texture.minFilter =
-        THREE.NearestFilter;
-
-    texture.magFilter =
-        THREE.NearestFilter;
-
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.minFilter = THREE.NearestFilter;
+    texture.magFilter = THREE.NearestFilter;
     texture.generateMipmaps = false;
-
     return texture;
 }
 
-const toonGradientMap =
-    createToonGradientTexture();
+const toonGradientMap = createToonGradientTexture();
 
-
-// =============================
-// OBJECT VARIABLES
-// =============================
-
+// Objects
 let modelRoot = null;
-
 let menuButtonObj = null;
 let aboutButtonObj = null;
 let photoButtonObj = null;
-
 let menuTargetObj = null;
 let aboutTargetObj = null;
 let photoTargetObj = null;
-
 let aboutBackButtonObj = null;
 let menuBackButtonObj = null;
-
-let defaultCamPos =
-    new THREE.Vector3();
-
-let defaultCamTarget =
-    new THREE.Vector3();
-
+let defaultCamPos = new THREE.Vector3();
+let defaultCamTarget = new THREE.Vector3();
 let currentPage = null;
-
 let flyAnimation = null;
-
 const curtainShaders = [];
-
 const clock = new THREE.Clock();
 
-
-// =============================
-// GLTF LOADER
-// =============================
-
-const loader =
-    new THREE.GLTFLoader();
-
-const dracoLoader =
-    new THREE.DRACOLoader();
+// GLTF Loader
+const loader = new THREE.GLTFLoader();
+const dracoLoader = new THREE.DRACOLoader();
 
 dracoLoader.setDecoderPath(
     "https://www.gstatic.com/draco/versioned/decoders/1.5.6/"
@@ -186,726 +117,276 @@ dracoLoader.setDecoderPath(
 
 loader.setDRACOLoader(dracoLoader);
 
-
-// =============================
-// LOAD MODEL
-// =============================
-
+// Load Model
 loader.load(
-
     "https://supawitphumpurk.github.io/Shushifull/Shushi.glb?v=3",
-
     function(gltf) {
-
         const model = gltf.scene;
-
         modelRoot = model;
-
         model.rotation.y = -Math.PI / 2;
 
-
         model.traverse(function(node) {
-
-            // =============================
-            // BACK BUTTONS
-            // =============================
-
-            if (
-                node.name === "Plane.028" ||
-                node.name === "Plane028"
-            ) {
-
+            // Back Buttons
+            if (node.name === "Plane.028" || node.name === "Plane028") {
                 aboutBackButtonObj = node;
-
             }
 
-            if (
-                node.name === "Plane.030" ||
-                node.name === "Plane030"
-            ) {
-
+            if (node.name === "Plane.030" || node.name === "Plane030") {
                 menuBackButtonObj = node;
-
             }
-
 
             if (!node.isMesh) return;
 
+            const originalMap = node.material ? node.material.map : null;
+            const originalColor = node.material && node.material.color
+                ? node.material.color.clone()
+                : new THREE.Color(0xffffff);
 
-            const originalMap =
-                node.material
-                ? node.material.map
-                : null;
+            // ABOUT Back Button
+            if (node.name === "Plane.028" || node.name === "Plane028") {
+                node.material = new THREE.MeshStandardMaterial({
+                    color: 0x000000,
+                    metalness: 0.0,
+                    roughness: 0.8,
+                    side: THREE.DoubleSide
+                });
+                node.material.needsUpdate = true;
+            }
 
-            const originalColor =
-                node.material &&
-                node.material.color
-                    ? node.material.color.clone()
-                    : new THREE.Color(0xffffff);
+            // MENU Back Button
+            if (node.name === "Plane.030" || node.name === "Plane030") {
+                node.material = new THREE.MeshStandardMaterial({
+                    color: 0x000000,
+                    metalness: 0.0,
+                    roughness: 0.8,
+                    side: THREE.DoubleSide
+                });
+                node.material.needsUpdate = true;
+            }
 
+            // PBR Material
+            if (node.name.startsWith("Cylinder")) {
+                node.material = new THREE.MeshStandardMaterial({
+                    map: originalMap,
+                    color: originalColor,
+                    metalness: 0.85,
+                    roughness: 0.25
+                });
+            }
 
-            // =============================
-            // ABOUT BACK BUTTON
-            // =============================
+            // Cel Shading
+            if (node.name.startsWith("Icosphere")) {
+                node.material = new THREE.MeshToonMaterial({
+                    map: originalMap,
+                    color: originalColor,
+                    gradientMap: toonGradientMap
+                });
+            }
 
-            if (
-                node.name === "Plane.028" ||
-                node.name === "Plane028"
-            ) {
+            // Main Buttons
+            if (node.name === "Plane025") menuButtonObj = node;
+            if (node.name === "Plane026") aboutButtonObj = node;
+            if (node.name === "Plane027") photoButtonObj = node;
 
-                node.material =
-                    new THREE.MeshStandardMaterial({
+            // Targets
+            if (node.name === "Plane016") menuTargetObj = node;
+            if (node.name === "Plane017") aboutTargetObj = node;
+            if (node.name === "Plane024") photoTargetObj = node;
 
-                        color: 0x000000,
+            // Curtain
+            if (node.name === "Plane011" && node.material) {
+                node.material.onBeforeCompile = function(shader) {
+                    shader.uniforms.uTime = { value: 0 };
+                    shader.vertexShader =
+                        "uniform float uTime;\n" +
+                        shader.vertexShader;
 
-                        metalness: 0.0,
+                    shader.vertexShader = shader.vertexShader.replace(
+                        "#include <begin_vertex>",
+                        `
+                        #include <begin_vertex>
+                        float waveStrength = 0.04;
+                        float waveSpeed = 2.0;
+                        float waveFreq = 6.0;
+                        float hangFactor = clamp(
+                            1.0 - (position.y + 1.0),
+                            0.0,
+                            1.0
+                        );
+                        transformed.x +=
+                            sin(position.y * waveFreq + uTime * waveSpeed)
+                            * waveStrength * hangFactor;
+                        transformed.z +=
+                            cos(position.y * waveFreq * 0.7 + uTime * waveSpeed)
+                            * waveStrength * 0.5 * hangFactor;
+                        `
+                    );
 
-                        roughness: 0.8,
-
-                        side: THREE.DoubleSide
-
-                    });
+                    curtainShaders.push(shader);
+                };
 
                 node.material.needsUpdate = true;
-
             }
-
-
-            // =============================
-            // MENU BACK BUTTON
-            // =============================
-
-            if (
-                node.name === "Plane.030" ||
-                node.name === "Plane030"
-            ) {
-
-                node.material =
-                    new THREE.MeshStandardMaterial({
-
-                        color: 0x000000,
-
-                        metalness: 0.0,
-
-                        roughness: 0.8,
-
-                        side: THREE.DoubleSide
-
-                    });
-
-                node.material.needsUpdate = true;
-
-            }
-
-
-            // =============================
-            // PBR MATERIAL
-            // =============================
-
-            if (
-                node.name.startsWith("Cylinder")
-            ) {
-
-                node.material =
-                    new THREE.MeshStandardMaterial({
-
-                        map: originalMap,
-
-                        color: originalColor,
-
-                        metalness: 0.85,
-
-                        roughness: 0.25
-
-                    });
-
-            }
-
-
-            // =============================
-            // CEL SHADING
-            // =============================
-
-            if (
-                node.name.startsWith("Icosphere")
-            ) {
-
-                node.material =
-                    new THREE.MeshToonMaterial({
-
-                        map: originalMap,
-
-                        color: originalColor,
-
-                        gradientMap: toonGradientMap
-
-                    });
-
-            }
-
-
-            // =============================
-            // MAIN BUTTONS
-            // =============================
-
-            // MENU
-            if (node.name === "Plane025") {
-
-                menuButtonObj = node;
-
-            }
-
-            // ABOUT ME
-            if (node.name === "Plane026") {
-
-                aboutButtonObj = node;
-
-            }
-
-            // PORTFOLIO
-            if (node.name === "Plane027") {
-
-                photoButtonObj = node;
-
-            }
-
-
-            // =============================
-            // TARGETS
-            // =============================
-
-            // MENU
-            if (node.name === "Plane016") {
-
-                menuTargetObj = node;
-
-            }
-
-            // ABOUT
-            if (node.name === "Plane017") {
-
-                aboutTargetObj = node;
-
-            }
-
-            // PHOTO
-            if (node.name === "Plane024") {
-
-                photoTargetObj = node;
-
-            }
-
-
-            // =============================
-            // CURTAIN
-            // =============================
-
-            if (
-                node.name === "Plane011" &&
-                node.material
-            ) {
-
-                node.material.onBeforeCompile =
-                    function(shader) {
-
-                        shader.uniforms.uTime =
-                            { value: 0 };
-
-                        shader.vertexShader =
-                            "uniform float uTime;\n" +
-                            shader.vertexShader;
-
-
-                        shader.vertexShader =
-                            shader.vertexShader.replace(
-
-                                "#include <begin_vertex>",
-
-                                `
-                                #include <begin_vertex>
-
-                                float waveStrength = 0.04;
-                                float waveSpeed = 2.0;
-                                float waveFreq = 6.0;
-
-                                float hangFactor = clamp(
-                                    1.0 - (position.y + 1.0),
-                                    0.0,
-                                    1.0
-                                );
-
-                                transformed.x +=
-                                    sin(
-                                        position.y *
-                                        waveFreq +
-                                        uTime *
-                                        waveSpeed
-                                    )
-                                    *
-                                    waveStrength
-                                    *
-                                    hangFactor;
-
-                                transformed.z +=
-                                    cos(
-                                        position.y *
-                                        waveFreq *
-                                        0.7 +
-                                        uTime *
-                                        waveSpeed
-                                    )
-                                    *
-                                    waveStrength
-                                    *
-                                    0.5
-                                    *
-                                    hangFactor;
-                                `
-                            );
-
-                        curtainShaders.push(shader);
-
-                    };
-
-                node.material.needsUpdate = true;
-
-            }
-
         });
 
-
-        // =============================
-        // CENTER MODEL
-        // =============================
-
-        const box =
-            new THREE.Box3()
-            .setFromObject(model);
-
-        const center =
-            box.getCenter(
-                new THREE.Vector3()
-            );
-
-        const size =
-            box.getSize(
-                new THREE.Vector3()
-            );
+        // Center Model
+        const box = new THREE.Box3().setFromObject(model);
+        const center = box.getCenter(new THREE.Vector3());
+        const size = box.getSize(new THREE.Vector3());
 
         model.position.sub(center);
 
+        // Initial Camera
+        const maxDim = Math.max(size.x, size.y, size.z);
+        const fov = camera.fov * Math.PI / 180;
 
-        // =============================
-        // INITIAL CAMERA
-        // =============================
-
-        const maxDim =
-            Math.max(
-                size.x,
-                size.y,
-                size.z
-            );
-
-        const fov =
-            camera.fov *
-            Math.PI /
-            180;
-
-        let cameraZ =
-            Math.abs(
-                maxDim /
-                (2 * Math.tan(fov / 2))
-            );
+        let cameraZ = Math.abs(
+            maxDim / (2 * Math.tan(fov / 2))
+        );
 
         cameraZ *= 1.35;
 
-
-        camera.position.set(
-            0,
-            0,
-            cameraZ
-        );
-
-        controls.target.set(
-            0,
-            0,
-            0
-        );
-
+        camera.position.set(0, 0, cameraZ);
+        controls.target.set(0, 0, 0);
         controls.update();
 
-
-        defaultCamPos.copy(
-            camera.position
-        );
-
-        defaultCamTarget.copy(
-            controls.target
-        );
-
+        defaultCamPos.copy(camera.position);
+        defaultCamTarget.copy(controls.target);
 
         scene.add(model);
-
     },
-
     undefined,
-
     function(error) {
-
-        console.error(
-            "โหลดโมเดลไม่สำเร็จ",
-            error
-        );
-
+        console.error("โหลดโมเดลไม่สำเร็จ", error);
     }
-
 );
 
+// Raycaster
+const raycaster = new THREE.Raycaster();
+const mouse = new THREE.Vector2();
 
-// =============================
-// RAYCASTER
-// =============================
-
-const raycaster =
-    new THREE.Raycaster();
-
-const mouse =
-    new THREE.Vector2();
-
-
-function isObjectOrChild(
-    object,
-    target
-) {
-
+function isObjectOrChild(object, target) {
     if (!target) return false;
 
     let current = object;
 
     while (current) {
-
-        if (current === target) {
-            return true;
-        }
-
+        if (current === target) return true;
         current = current.parent;
-
     }
 
     return false;
 }
 
+// Click
+renderer.domElement.addEventListener("click", function(event) {
+    if (!modelRoot || flyAnimation) return;
 
-// =============================
-// CLICK
-// =============================
+    mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+    mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
 
-renderer.domElement.addEventListener(
-    "click",
-    function(event) {
+    raycaster.setFromCamera(mouse, camera);
 
-        if (!modelRoot || flyAnimation) {
+    const intersects = raycaster.intersectObject(modelRoot, true);
+    if (intersects.length === 0) return;
+
+    // Back Buttons
+    for (let i = 0; i < intersects.length; i++) {
+        const hit = intersects[i].object;
+
+        if (isObjectOrChild(hit, menuBackButtonObj)) {
+            if (currentPage === "menu") {
+                goBack();
+            }
             return;
         }
 
+        if (isObjectOrChild(hit, aboutBackButtonObj)) {
+            if (currentPage === "about") {
+                goBack();
+            }
+            return;
+        }
+    }
 
-        mouse.x =
-            (event.clientX /
-            window.innerWidth) *
-            2 - 1;
+    // Main Buttons
+    for (let i = 0; i < intersects.length; i++) {
+        const hit = intersects[i].object;
 
-        mouse.y =
-            -(event.clientY /
-            window.innerHeight) *
-            2 + 1;
+        if (isObjectOrChild(hit, menuButtonObj)) {
+            showMenu();
+            return;
+        }
 
+        if (isObjectOrChild(hit, aboutButtonObj)) {
+            showAboutMe();
+            return;
+        }
 
-        raycaster.setFromCamera(
-            mouse,
-            camera
-        );
-
-
-        const intersects =
-            raycaster.intersectObject(
-                modelRoot,
-                true
+        // PORTFOLIO
+        if (isObjectOrChild(hit, photoButtonObj)) {
+            window.open(
+                "https://supawitphumpurk.github.io/Shushifull/portfolio.html",
+                "_blank"
             );
-
-
-        if (intersects.length === 0) {
             return;
         }
-
-
-        // =============================
-        // BACK BUTTONS
-        // =============================
-
-        for (
-            let i = 0;
-            i < intersects.length;
-            i++
-        ) {
-
-            const hit =
-                intersects[i].object;
-
-
-            if (
-                isObjectOrChild(
-                    hit,
-                    menuBackButtonObj
-                )
-            ) {
-
-                if (
-                    currentPage === "menu"
-                ) {
-
-                    goBack();
-
-                }
-
-                return;
-
-            }
-
-
-            if (
-                isObjectOrChild(
-                    hit,
-                    aboutBackButtonObj
-                )
-            ) {
-
-                if (
-                    currentPage === "about"
-                ) {
-
-                    goBack();
-
-                }
-
-                return;
-
-            }
-
-        }
-
-
-        // =============================
-        // MAIN BUTTONS
-        // =============================
-
-        for (
-            let i = 0;
-            i < intersects.length;
-            i++
-        ) {
-
-            const hit =
-                intersects[i].object;
-
-
-            // MENU
-            if (
-                isObjectOrChild(
-                    hit,
-                    menuButtonObj
-                )
-            ) {
-
-                showMenu();
-
-                return;
-
-            }
-
-
-            // ABOUT ME
-            if (
-                isObjectOrChild(
-                    hit,
-                    aboutButtonObj
-                )
-            ) {
-
-                showAboutMe();
-
-                return;
-
-            }
-
-
-            // PORTFOLIO
-            if (
-                isObjectOrChild(
-                    hit,
-                    photoButtonObj
-                )
-            ) {
-
-                window.open(
-                    "https://supawitphumpurk.github.io/Shushifull/portfolio.html",
-                    "_blank"
-                );
-
-                return;
-
-            }
-
-        }
-
     }
-);
+});
 
-
-// =============================
-// FOCUS OBJECT
-// =============================
-
-function focusOnObject(
-    object,
-    distance = 1.8
-) {
-
+// Focus Object
+function focusOnObject(object, distance = 1.8) {
     if (!object) {
-
-        console.warn(
-            "ไม่พบ Target"
-        );
-
+        console.warn("ไม่พบ Target");
         return;
-
     }
 
+    const box = new THREE.Box3().setFromObject(object);
+    const center = box.getCenter(new THREE.Vector3());
+    const size = box.getSize(new THREE.Vector3());
+    const maxDim = Math.max(size.x, size.y, size.z, 0.1);
 
-    const box =
-        new THREE.Box3()
-        .setFromObject(object);
+    const direction = new THREE.Vector3();
+    direction.subVectors(camera.position, center);
 
-
-    const center =
-        box.getCenter(
-            new THREE.Vector3()
-        );
-
-
-    const size =
-        box.getSize(
-            new THREE.Vector3()
-        );
-
-
-    const maxDim =
-        Math.max(
-            size.x,
-            size.y,
-            size.z,
-            0.1
-        );
-
-
-    const direction =
-        new THREE.Vector3();
-
-
-    direction.subVectors(
-        camera.position,
-        center
-    );
-
-
-    if (
-        direction.lengthSq() <
-        0.0001
-    ) {
-
-        direction.set(
-            0,
-            0,
-            1
-        );
-
+    if (direction.lengthSq() < 0.0001) {
+        direction.set(0, 0, 1);
     }
-
 
     direction.normalize();
 
-
-    const targetCameraPosition =
-        center.clone().add(
-            direction.multiplyScalar(
-                maxDim * distance
-            )
-        );
-
+    const targetCameraPosition = center.clone().add(
+        direction.multiplyScalar(maxDim * distance)
+    );
 
     flyCameraTo(
         targetCameraPosition,
         center,
         900
     );
-
 }
 
-
-// =============================
-// CAMERA FLY
-// =============================
-
-function flyCameraTo(
-    targetPosition,
-    targetLookAt,
-    duration = 900
-) {
-
+// Camera Fly
+function flyCameraTo(targetPosition, targetLookAt, duration = 900) {
     if (flyAnimation) {
-
-        cancelAnimationFrame(
-            flyAnimation
-        );
-
+        cancelAnimationFrame(flyAnimation);
     }
 
-
-    const startPosition =
-        camera.position.clone();
-
-    const startTarget =
-        controls.target.clone();
-
-    const startTime =
-        performance.now();
-
+    const startPosition = camera.position.clone();
+    const startTarget = controls.target.clone();
+    const startTime = performance.now();
 
     controls.enabled = false;
 
-
     function animateCamera(now) {
+        const progress = Math.min(
+            (now - startTime) / duration,
+            1
+        );
 
-        const progress =
-            Math.min(
-                (now - startTime) /
-                duration,
-                1
-            );
-
-
-        const ease =
-            progress < 0.5
-
-                ? 2 *
-                  progress *
-                  progress
-
-                : 1 -
-                  Math.pow(
-                      -2 * progress + 2,
-                      2
-                  ) / 2;
-
+        const ease = progress < 0.5
+            ? 2 * progress * progress
+            : 1 - Math.pow(-2 * progress + 2, 2) / 2;
 
         camera.position.lerpVectors(
             startPosition,
@@ -913,95 +394,42 @@ function flyCameraTo(
             ease
         );
 
-
         controls.target.lerpVectors(
             startTarget,
             targetLookAt,
             ease
         );
 
-
-        camera.lookAt(
-            controls.target
-        );
-
+        camera.lookAt(controls.target);
 
         if (progress < 1) {
-
-            flyAnimation =
-                requestAnimationFrame(
-                    animateCamera
-                );
-
+            flyAnimation = requestAnimationFrame(animateCamera);
         } else {
-
-            camera.position.copy(
-                targetPosition
-            );
-
-            controls.target.copy(
-                targetLookAt
-            );
-
-            camera.lookAt(
-                targetLookAt
-            );
-
+            camera.position.copy(targetPosition);
+            controls.target.copy(targetLookAt);
+            camera.lookAt(targetLookAt);
             controls.enabled = true;
-
             flyAnimation = null;
-
         }
-
     }
 
-
-    flyAnimation =
-        requestAnimationFrame(
-            animateCamera
-        );
-
+    flyAnimation = requestAnimationFrame(animateCamera);
 }
 
-
-// =============================
 // MENU
-// =============================
-
 function showMenu() {
-
     currentPage = "menu";
-
-    focusOnObject(
-        menuTargetObj,
-        2.0
-    );
-
+    focusOnObject(menuTargetObj, 2.0);
 }
 
-
-// =============================
 // ABOUT ME
-// =============================
-
 function showAboutMe() {
-
     currentPage = "about";
-
-    focusOnObject(
-        aboutTargetObj,
-        2.0
-    );
-
+    focusOnObject(aboutTargetObj, 2.0);
 }
 
-
-// =============================
 // GO BACK
-// =============================
-
 function goBack() {
-
     currentPage = null;
 
     flyCameraTo(
@@ -1009,74 +437,40 @@ function goBack() {
         defaultCamTarget,
         900
     );
-
 }
 
-
-// =============================
-// ANIMATION
-// =============================
-
+// Animation
 function animate() {
-
-    requestAnimationFrame(
-        animate
-    );
-
+    requestAnimationFrame(animate);
 
     if (controls.enabled) {
-
         controls.update();
-
     }
 
+    const time = clock.getElapsedTime();
 
-    const time =
-        clock.getElapsedTime();
+    curtainShaders.forEach(function(shader) {
+        shader.uniforms.uTime.value = time;
+    });
 
-
-    curtainShaders.forEach(
-        function(shader) {
-
-            shader.uniforms.uTime.value =
-                time;
-
-        }
-    );
-
-
-    renderer.render(
-        scene,
-        camera
-    );
-
+    renderer.render(scene, camera);
 }
 
 animate();
 
+// Resize
+window.addEventListener("resize", function() {
+    camera.aspect =
+        window.innerWidth / window.innerHeight;
 
-// =============================
-// RESIZE
-// =============================
+    camera.updateProjectionMatrix();
 
-window.addEventListener(
-    "resize",
-    function() {
+    renderer.setSize(
+        window.innerWidth,
+        window.innerHeight
+    );
+});
 
-        camera.aspect =
-            window.innerWidth /
-            window.innerHeight;
-
-        camera.updateProjectionMatrix();
-
-
-        renderer.setSize(
-            window.innerWidth,
-            window.innerHeight
-        );
-
-    }
-);
 </script>
 
 </body>
