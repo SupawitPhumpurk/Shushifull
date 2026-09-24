@@ -326,152 +326,152 @@ renderer.domElement.addEventListener("click", function(event) {
         // PORTFOLIO
         if (isObjectOrChild(hit, photoButtonObj)) {
             window.open(
-                "https://supawitphumpurk.github.io/Shushifull/portfolio.html", 
-                "_blank" 
-            ); 
-            return; 
-        } 
-    } 
-}); 
- 
-// Focus Object 
-function focusOnObject(object, distance = 1.8) { 
-    if (!object) { 
-        console.warn("ไม่พบ Target"); 
-        return; 
-    } 
- 
-    const box = new THREE.Box3().setFromObject(object); 
-    const center = box.getCenter(new THREE.Vector3()); 
-    const size = box.getSize(new THREE.Vector3()); 
-    const maxDim = Math.max(size.x, size.y, size.z, 0.1); 
- 
-    const direction = new THREE.Vector3(); 
-    direction.subVectors(camera.position, center); 
- 
-    if (direction.lengthSq() < 0.0001) { 
-        direction.set(0, 0, 1); 
-    } 
- 
-    direction.normalize(); 
- 
-    const targetCameraPosition = center.clone().add( 
-        direction.multiplyScalar(maxDim * distance) 
-    ); 
- 
-    flyCameraTo( 
-        targetCameraPosition, 
-        center, 
-        900 
-    ); 
-} 
- 
-// Camera Fly 
-function flyCameraTo(targetPosition, targetLookAt, duration = 900) { 
-    if (flyAnimation) { 
-        cancelAnimationFrame(flyAnimation); 
-    } 
- 
-    const startPosition = camera.position.clone(); 
-    const startTarget = controls.target.clone(); 
-    const startTime = performance.now(); 
- 
-    controls.enabled = false; 
- 
-    function animateCamera(now) { 
-        const progress = Math.min( 
-            (now - startTime) / duration, 
-            1 
-        ); 
- 
-        const ease = progress < 0.5 
-            ? 2 * progress * progress 
-            : 1 - Math.pow(-2 * progress + 2, 2) / 2; 
- 
-        camera.position.lerpVectors( 
-            startPosition, 
-            targetPosition, 
-            ease 
-        ); 
- 
-        controls.target.lerpVectors( 
-            startTarget, 
-            targetLookAt, 
-            ease 
-        ); 
- 
-        camera.lookAt(controls.target); 
- 
-        if (progress < 1) { 
-            flyAnimation = requestAnimationFrame(animateCamera); 
-        } else { 
-            camera.position.copy(targetPosition); 
-            controls.target.copy(targetLookAt); 
-            camera.lookAt(targetLookAt); 
-            controls.enabled = true; 
-            flyAnimation = null; 
-        } 
-    } 
- 
-    flyAnimation = requestAnimationFrame(animateCamera); 
-} 
- 
-// MENU 
-function showMenu() { 
-    currentPage = "menu"; 
-    focusOnObject(menuTargetObj, 2.0); 
-} 
- 
-// ABOUT ME 
-function showAboutMe() { 
-    currentPage = "about"; 
-    focusOnObject(aboutTargetObj, 2.0); 
-} 
- 
-// GO BACK 
-function goBack() { 
-    currentPage = null; 
- 
-    flyCameraTo( 
-        defaultCamPos, 
-        defaultCamTarget, 
-        900 
-    ); 
-} 
- 
-// Animation 
-function animate() { 
-    requestAnimationFrame(animate); 
- 
-    if (controls.enabled) { 
-        controls.update(); 
-    } 
- 
-    const time = clock.getElapsedTime(); 
- 
-    curtainShaders.forEach(function(shader) { 
-        shader.uniforms.uTime.value = time; 
-    }); 
- 
-    renderer.render(scene, camera); 
-} 
- 
-animate(); 
- 
-// Resize 
-window.addEventListener("resize", function() { 
-    camera.aspect = 
-        window.innerWidth / window.innerHeight; 
- 
-    camera.updateProjectionMatrix(); 
- 
-    renderer.setSize( 
-        window.innerWidth, 
-        window.innerHeight 
-    ); 
-}); 
- 
-</script> 
- 
-</body> 
-</html> 
+                "https://supawitphumpurk.github.io/Shushifull/portfolio.html",
+                "_blank"
+            );
+            return;
+        }
+    }
+});
+
+// Focus Object
+function focusOnObject(object, distance = 1.8) {
+    if (!object) {
+        console.warn("ไม่พบ Target");
+        return;
+    }
+
+    const box = new THREE.Box3().setFromObject(object);
+    const center = box.getCenter(new THREE.Vector3());
+    const size = box.getSize(new THREE.Vector3());
+    const maxDim = Math.max(size.x, size.y, size.z, 0.1);
+
+    const direction = new THREE.Vector3();
+    direction.subVectors(camera.position, center);
+
+    if (direction.lengthSq() < 0.0001) {
+        direction.set(0, 0, 1);
+    }
+
+    direction.normalize();
+
+    const targetCameraPosition = center.clone().add(
+        direction.multiplyScalar(maxDim * distance)
+    );
+
+    flyCameraTo(
+        targetCameraPosition,
+        center,
+        900
+    );
+}
+
+// Camera Fly
+function flyCameraTo(targetPosition, targetLookAt, duration = 900) {
+    if (flyAnimation) {
+        cancelAnimationFrame(flyAnimation);
+    }
+
+    const startPosition = camera.position.clone();
+    const startTarget = controls.target.clone();
+    const startTime = performance.now();
+
+    controls.enabled = false;
+
+    function animateCamera(now) {
+        const progress = Math.min(
+            (now - startTime) / duration,
+            1
+        );
+
+        const ease = progress < 0.5
+            ? 2 * progress * progress
+            : 1 - Math.pow(-2 * progress + 2, 2) / 2;
+
+        camera.position.lerpVectors(
+            startPosition,
+            targetPosition,
+            ease
+        );
+
+        controls.target.lerpVectors(
+            startTarget,
+            targetLookAt,
+            ease
+        );
+
+        camera.lookAt(controls.target);
+
+        if (progress < 1) {
+            flyAnimation = requestAnimationFrame(animateCamera);
+        } else {
+            camera.position.copy(targetPosition);
+            controls.target.copy(targetLookAt);
+            camera.lookAt(targetLookAt);
+            controls.enabled = true;
+            flyAnimation = null;
+        }
+    }
+
+    flyAnimation = requestAnimationFrame(animateCamera);
+}
+
+// MENU
+function showMenu() {
+    currentPage = "menu";
+    focusOnObject(menuTargetObj, 2.0);
+}
+
+// ABOUT ME
+function showAboutMe() {
+    currentPage = "about";
+    focusOnObject(aboutTargetObj, 2.0);
+}
+
+// GO BACK
+function goBack() {
+    currentPage = null;
+
+    flyCameraTo(
+        defaultCamPos,
+        defaultCamTarget,
+        900
+    );
+}
+
+// Animation
+function animate() {
+    requestAnimationFrame(animate);
+
+    if (controls.enabled) {
+        controls.update();
+    }
+
+    const time = clock.getElapsedTime();
+
+    curtainShaders.forEach(function(shader) {
+        shader.uniforms.uTime.value = time;
+    });
+
+    renderer.render(scene, camera);
+}
+
+animate();
+
+// Resize
+window.addEventListener("resize", function() {
+    camera.aspect =
+        window.innerWidth / window.innerHeight;
+
+    camera.updateProjectionMatrix();
+
+    renderer.setSize(
+        window.innerWidth,
+        window.innerHeight
+    );
+});
+
+</script>
+
+</body>
+</html> โค้ดนี้มีอะไรบ้าง ในหัวข้องาน
