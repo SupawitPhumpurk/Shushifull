@@ -40,28 +40,32 @@
 <script>
 
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x1a1a1a);
+
+scene.background =
+    new THREE.Color(0x1a1a1a);
 
 
 /* =========================
    CAMERA
 ========================= */
 
-const camera = new THREE.PerspectiveCamera(
-    45,
-    window.innerWidth / window.innerHeight,
-    0.01,
-    1000
-);
+const camera =
+    new THREE.PerspectiveCamera(
+        45,
+        window.innerWidth / window.innerHeight,
+        0.01,
+        1000
+    );
 
 
 /* =========================
    RENDERER
 ========================= */
 
-const renderer = new THREE.WebGLRenderer({
-    antialias: true
-});
+const renderer =
+    new THREE.WebGLRenderer({
+        antialias: true
+    });
 
 renderer.setSize(
     window.innerWidth,
@@ -69,80 +73,81 @@ renderer.setSize(
 );
 
 renderer.setPixelRatio(
-    Math.min(window.devicePixelRatio, 2)
+    window.devicePixelRatio
 );
 
-renderer.outputEncoding = THREE.sRGBEncoding;
+renderer.outputEncoding =
+    THREE.sRGBEncoding;
 
-document.body.appendChild(renderer.domElement);
+document.body.appendChild(
+    renderer.domElement
+);
 
 
 /* =========================
    ORBIT CONTROLS
 ========================= */
 
-const controls = new THREE.OrbitControls(
-    camera,
-    renderer.domElement
-);
+const controls =
+    new THREE.OrbitControls(
+        camera,
+        renderer.domElement
+    );
 
 controls.enableDamping = true;
-controls.dampingFactor = 0.08;
-
 controls.enableRotate = true;
 controls.enableZoom = true;
 controls.enablePan = true;
 
+
 /* คลิกซ้าย = หมุน */
-controls.mouseButtons.LEFT = THREE.MOUSE.ROTATE;
+
+controls.mouseButtons.LEFT =
+    THREE.MOUSE.ROTATE;
+
 
 /* คลิกขวา = เลื่อน */
-controls.mouseButtons.RIGHT = THREE.MOUSE.PAN;
+
+controls.mouseButtons.RIGHT =
+    THREE.MOUSE.PAN;
+
 
 /* คลิกกลาง = ปิด */
-controls.mouseButtons.MIDDLE = null;
+
+controls.mouseButtons.MIDDLE =
+    null;
 
 
 /* =========================
    LIGHT
 ========================= */
 
-const ambientLight = new THREE.AmbientLight(
-    0xffffff,
-    0.65
+const ambientLight =
+    new THREE.AmbientLight(
+        0xffffff,
+        1.0
+    );
+
+scene.add(
+    ambientLight
 );
 
-scene.add(ambientLight);
 
-
-const directionalLight = new THREE.DirectionalLight(
-    0xffffff,
-    1.8
-);
+const directionalLight =
+    new THREE.DirectionalLight(
+        0xffffff,
+        1.2
+    );
 
 directionalLight.position.set(
-    5,
+    0,
     10,
-    8
-);
-
-scene.add(directionalLight);
-
-
-/* ไฟด้านหน้า */
-
-const frontLight = new THREE.DirectionalLight(
-    0xffffff,
-    0.8
-);
-
-frontLight.position.set(
-    -5,
-    5,
     10
 );
 
-scene.add(frontLight);
+scene.add(
+    directionalLight
+);
 
 
 /* =========================
@@ -151,46 +156,43 @@ scene.add(frontLight);
 
 function createToonGradientTexture() {
 
-    const canvas = document.createElement("canvas");
+    const canvas =
+        document.createElement("canvas");
 
     canvas.width = 4;
     canvas.height = 1;
 
-    const ctx = canvas.getContext("2d");
-
-    /*
-        4 ระดับชัด ๆ
-
-        มืด
-        กลาง
-        สว่าง
-        สว่างมาก
-    */
+    const ctx =
+        canvas.getContext("2d");
 
     const shades = [
-        45,
-        100,
+        60,
+        110,
         180,
         255
     ];
 
-    for (let i = 0; i < shades.length; i++) {
+    shades.forEach(
+        function(value, index) {
 
-        const value = shades[i];
+            ctx.fillStyle =
+                `rgb(${value},${value},${value})`;
 
-        ctx.fillStyle =
-            `rgb(${value},${value},${value})`;
+            ctx.fillRect(
+                index,
+                0,
+                1,
+                1
+            );
 
-        ctx.fillRect(
-            i,
-            0,
-            1,
-            1
-        );
-    }
+        }
+    );
+
 
     const texture =
-        new THREE.CanvasTexture(canvas);
+        new THREE.CanvasTexture(
+            canvas
+        );
 
     texture.minFilter =
         THREE.NearestFilter;
@@ -198,10 +200,12 @@ function createToonGradientTexture() {
     texture.magFilter =
         THREE.NearestFilter;
 
-    texture.generateMipmaps = false;
+    texture.generateMipmaps =
+        false;
 
     return texture;
 }
+
 
 const toonGradientMap =
     createToonGradientTexture();
@@ -234,24 +238,33 @@ let currentPage = null;
 
 let flyAnimation = null;
 
+
+/* =========================
+   CURTAIN SHADERS
+========================= */
+
 const curtainShaders = [];
 
-const clock = new THREE.Clock();
+const clock =
+    new THREE.Clock();
 
 
 /* =========================
-   GLTF + DRACO
+   GLTF LOADER
 ========================= */
 
 const loader =
     new THREE.GLTFLoader();
 
+
 const dracoLoader =
     new THREE.DRACOLoader();
+
 
 dracoLoader.setDecoderPath(
     "https://www.gstatic.com/draco/versioned/decoders/1.5.6/"
 );
+
 
 loader.setDRACOLoader(
     dracoLoader
@@ -264,14 +277,16 @@ loader.setDRACOLoader(
 
 loader.load(
 
-    "https://supawitphumpurk.github.io/Shushifull/Shushi.glb?v=4",
+    "https://supawitphumpurk.github.io/Shushifull/Shushi.glb?v=3",
 
     function(gltf) {
 
         const model =
             gltf.scene;
 
-        modelRoot = model;
+        modelRoot =
+            model;
+
 
         model.rotation.y =
             -Math.PI / 2;
@@ -281,33 +296,1081 @@ loader.load(
            TRAVERSE MODEL
         ========================= */
 
-        model.traverse(function(node) {
+        model.traverse(
+            function(node) {
 
-            /* =====================
-               BACK BUTTONS
-            ===================== */
+                /* =====================
+                   BACK BUTTON
+                   ABOUT
+                ===================== */
+
+                if (
+                    node.name === "Plane.028" ||
+                    node.name === "Plane028"
+                ) {
+
+                    aboutBackButtonObj =
+                        node;
+
+                }
+
+
+                /* =====================
+                   BACK BUTTON
+                   MENU
+                ===================== */
+
+                if (
+                    node.name === "Plane.030" ||
+                    node.name === "Plane030"
+                ) {
+
+                    menuBackButtonObj =
+                        node;
+
+                }
+
+
+                if (!node.isMesh) {
+                    return;
+                }
+
+
+                /* =====================
+                   ORIGINAL MATERIAL
+                ===================== */
+
+                const originalMap =
+                    node.material
+                    ? node.material.map
+                    : null;
+
+
+                const originalColor =
+                    node.material &&
+                    node.material.color
+                    ? node.material.color.clone()
+                    : new THREE.Color(
+                        0xffffff
+                    );
+
+
+                /* =====================
+                   ABOUT BACK BUTTON
+                ===================== */
+
+                if (
+                    node.name === "Plane.028" ||
+                    node.name === "Plane028"
+                ) {
+
+                    node.material =
+                        new THREE.MeshStandardMaterial({
+
+                            color: 0x000000,
+
+                            metalness: 0.0,
+
+                            roughness: 0.8,
+
+                            side:
+                                THREE.DoubleSide
+
+                        });
+
+                    node.material.needsUpdate =
+                        true;
+
+                }
+
+
+                /* =====================
+                   MENU BACK BUTTON
+                ===================== */
+
+                if (
+                    node.name === "Plane.030" ||
+                    node.name === "Plane030"
+                ) {
+
+                    node.material =
+                        new THREE.MeshStandardMaterial({
+
+                            color: 0x000000,
+
+                            metalness: 0.0,
+
+                            roughness: 0.8,
+
+                            side:
+                                THREE.DoubleSide
+
+                        });
+
+                    node.material.needsUpdate =
+                        true;
+
+                }
+
+
+                /* =====================
+                   PBR MATERIAL
+                   CYLINDER
+                ===================== */
+
+                if (
+                    node.name.startsWith(
+                        "Cylinder"
+                    )
+                ) {
+
+                    node.material =
+                        new THREE.MeshStandardMaterial({
+
+                            map: originalMap,
+
+                            color: originalColor,
+
+                            metalness: 0.85,
+
+                            roughness: 0.25,
+
+                            side:
+                                THREE.DoubleSide
+
+                        });
+
+                    node.material.needsUpdate =
+                        true;
+
+                }
+
+
+                /* =========================
+                   CEL SHADING
+
+                   Icosphere
+                   Icosphere.001
+                ========================= */
+
+                if (
+                    node.name === "Icosphere" ||
+                    node.name === "Icosphere.001"
+                ) {
+
+                    node.material =
+                        new THREE.MeshToonMaterial({
+
+                            /*
+                               ไม่ใช้ texture เดิม
+                               เพื่อให้ Toon ชัดขึ้น
+                            */
+
+                            color:
+                                originalColor,
+
+                            gradientMap:
+                                toonGradientMap,
+
+                            side:
+                                THREE.DoubleSide
+
+                        });
+
+                    node.material.needsUpdate =
+                        true;
+
+                }
+
+
+                /* =====================
+                   MAIN BUTTONS
+                ===================== */
+
+                if (
+                    node.name === "Plane025"
+                ) {
+
+                    menuButtonObj =
+                        node;
+
+                }
+
+
+                if (
+                    node.name === "Plane026"
+                ) {
+
+                    aboutButtonObj =
+                        node;
+
+                }
+
+
+                if (
+                    node.name === "Plane027"
+                ) {
+
+                    photoButtonObj =
+                        node;
+
+                }
+
+
+                /* =====================
+                   TARGETS
+                ===================== */
+
+                if (
+                    node.name === "Plane016"
+                ) {
+
+                    menuTargetObj =
+                        node;
+
+                }
+
+
+                if (
+                    node.name === "Plane017"
+                ) {
+
+                    aboutTargetObj =
+                        node;
+
+                }
+
+
+                if (
+                    node.name === "Plane024"
+                ) {
+
+                    photoTargetObj =
+                        node;
+
+                }
+
+
+                /* =========================
+                   CURTAIN
+                   Plane.011
+                ========================= */
+
+                if (
+                    node.name === "Plane.011" &&
+                    node.material
+                ) {
+
+                    node.material.onBeforeCompile =
+                        function(shader) {
+
+                            /*
+                               เวลา
+                            */
+
+                            shader.uniforms.uTime = {
+                                value: 0
+                            };
+
+
+                            /*
+                               เพิ่ม uniform
+                            */
+
+                            shader.vertexShader =
+                                "uniform float uTime;\n" +
+                                shader.vertexShader;
+
+
+                            /*
+                               เพิ่มการพริ้ว
+                            */
+
+                            shader.vertexShader =
+                                shader.vertexShader.replace(
+
+                                    "#include <begin_vertex>",
+
+                                    `
+
+                                    #include <begin_vertex>
+
+
+                                    /* คลื่นแนวตั้ง */
+
+                                    float wave1 =
+                                        sin(
+                                            position.y * 5.0
+                                            +
+                                            uTime * 2.0
+                                        );
+
+
+                                    /* คลื่นแนวนอน */
+
+                                    float wave2 =
+                                        sin(
+                                            position.x * 8.0
+                                            +
+                                            uTime * 2.5
+                                        );
+
+
+                                    /* รวมคลื่น */
+
+                                    float wave =
+                                        wave1 * 0.08
+                                        +
+                                        wave2 * 0.04;
+
+
+                                    /*
+                                       ให้ส่วนล่าง
+                                       พริ้วมากกว่า
+                                    */
+
+                                    float hangFactor =
+                                        clamp(
+                                            1.0 -
+                                            (position.y + 0.5),
+                                            0.0,
+                                            1.0
+                                        );
+
+
+                                    /*
+                                       ขยับ X
+                                    */
+
+                                    transformed.x +=
+                                        wave *
+                                        hangFactor;
+
+
+                                    /*
+                                       ขยับ Z
+                                    */
+
+                                    transformed.z +=
+                                        wave *
+                                        0.5 *
+                                        hangFactor;
+
+                                    `
+                                );
+
+
+                            /*
+                               เก็บ shader
+                               เอาไว้ update เวลา
+                            */
+
+                            curtainShaders.push(
+                                shader
+                            );
+
+                        };
+
+
+                    node.material.needsUpdate =
+                        true;
+
+                }
+
+            }
+        );
+
+
+        /* =========================
+           CENTER MODEL
+        ========================= */
+
+        const box =
+            new THREE.Box3()
+                .setFromObject(
+                    model
+                );
+
+
+        const center =
+            box.getCenter(
+                new THREE.Vector3()
+            );
+
+
+        const size =
+            box.getSize(
+                new THREE.Vector3()
+            );
+
+
+        model.position.sub(
+            center
+        );
+
+
+        /* =========================
+           INITIAL CAMERA
+        ========================= */
+
+        const maxDim =
+            Math.max(
+                size.x,
+                size.y,
+                size.z
+            );
+
+
+        const fov =
+            camera.fov *
+            Math.PI /
+            180;
+
+
+        let cameraZ =
+            Math.abs(
+                maxDim /
+                (
+                    2 *
+                    Math.tan(
+                        fov / 2
+                    )
+                )
+            );
+
+
+        cameraZ *= 1.35;
+
+
+        camera.position.set(
+            0,
+            0,
+            cameraZ
+        );
+
+
+        controls.target.set(
+            0,
+            0,
+            0
+        );
+
+
+        controls.update();
+
+
+        defaultCamPos.copy(
+            camera.position
+        );
+
+
+        defaultCamTarget.copy(
+            controls.target
+        );
+
+
+        scene.add(
+            model
+        );
+
+    },
+
+
+    undefined,
+
+
+    function(error) {
+
+        console.error(
+            "โหลดโมเดลไม่สำเร็จ",
+            error
+        );
+
+    }
+
+);
+
+
+/* =========================
+   RAYCASTER
+========================= */
+
+const raycaster =
+    new THREE.Raycaster();
+
+const mouse =
+    new THREE.Vector2();
+
+
+function isObjectOrChild(
+    object,
+    target
+) {
+
+    if (!target) {
+        return false;
+    }
+
+
+    let current =
+        object;
+
+
+    while (current) {
+
+        if (
+            current === target
+        ) {
+
+            return true;
+
+        }
+
+        current =
+            current.parent;
+
+    }
+
+
+    return false;
+
+}
+
+
+/* =========================
+   CLICK
+========================= */
+
+renderer.domElement.addEventListener(
+    "click",
+    function(event) {
+
+        if (
+            !modelRoot ||
+            flyAnimation
+        ) {
+
+            return;
+
+        }
+
+
+        mouse.x =
+            (
+                event.clientX /
+                window.innerWidth
+            ) * 2 - 1;
+
+
+        mouse.y =
+            -(
+                event.clientY /
+                window.innerHeight
+            ) * 2 + 1;
+
+
+        raycaster.setFromCamera(
+            mouse,
+            camera
+        );
+
+
+        const intersects =
+            raycaster.intersectObject(
+                modelRoot,
+                true
+            );
+
+
+        if (
+            intersects.length === 0
+        ) {
+
+            return;
+
+        }
+
+
+        /* =====================
+           BACK BUTTONS
+        ===================== */
+
+        for (
+            let i = 0;
+            i < intersects.length;
+            i++
+        ) {
+
+            const hit =
+                intersects[i].object;
+
 
             if (
-                node.name === "Plane.028" ||
-                node.name === "Plane028"
+                isObjectOrChild(
+                    hit,
+                    menuBackButtonObj
+                )
             ) {
 
-                aboutBackButtonObj = node;
+                if (
+                    currentPage === "menu"
+                ) {
+
+                    goBack();
+
+                }
+
+                return;
 
             }
 
 
             if (
-                node.name === "Plane.030" ||
-                node.name === "Plane030"
+                isObjectOrChild(
+                    hit,
+                    aboutBackButtonObj
+                )
             ) {
 
-                menuBackButtonObj = node;
+                if (
+                    currentPage === "about"
+                ) {
+
+                    goBack();
+
+                }
+
+                return;
+
+            }
+
+        }
+
+
+        /* =====================
+           MAIN BUTTONS
+        ===================== */
+
+        for (
+            let i = 0;
+            i < intersects.length;
+            i++
+        ) {
+
+            const hit =
+                intersects[i].object;
+
+
+            /* MENU */
+
+            if (
+                isObjectOrChild(
+                    hit,
+                    menuButtonObj
+                )
+            ) {
+
+                showMenu();
+
+                return;
 
             }
 
 
-            if (!node.isMesh) return;
+            /* ABOUT */
+
+            if (
+                isObjectOrChild(
+                    hit,
+                    aboutButtonObj
+                )
+            ) {
+
+                showAboutMe();
+
+                return;
+
+            }
 
 
-            const originalMap =
+            /* PORTFOLIO */
+
+            if (
+                isObjectOrChild(
+                    hit,
+                    photoButtonObj
+                )
+            ) {
+
+                window.open(
+                    "https://supawitphumpurk.github.io/Shushifull/portfolio.html",
+                    "_blank"
+                );
+
+                return;
+
+            }
+
+        }
+
+    }
+);
+
+
+/* =========================
+   FOCUS OBJECT
+========================= */
+
+function focusOnObject(
+    object,
+    distance = 1.8
+) {
+
+    if (!object) {
+
+        console.warn(
+            "ไม่พบ Target"
+        );
+
+        return;
+
+    }
+
+
+    const box =
+        new THREE.Box3()
+            .setFromObject(
+                object
+            );
+
+
+    const center =
+        box.getCenter(
+            new THREE.Vector3()
+        );
+
+
+    const size =
+        box.getSize(
+            new THREE.Vector3()
+        );
+
+
+    const maxDim =
+        Math.max(
+            size.x,
+            size.y,
+            size.z,
+            0.1
+        );
+
+
+    const direction =
+        new THREE.Vector3();
+
+
+    direction.subVectors(
+        camera.position,
+        center
+    );
+
+
+    if (
+        direction.lengthSq() <
+        0.0001
+    ) {
+
+        direction.set(
+            0,
+            0,
+            1
+        );
+
+    }
+
+
+    direction.normalize();
+
+
+    const targetCameraPosition =
+        center.clone().add(
+            direction.multiplyScalar(
+                maxDim * distance
+            )
+        );
+
+
+    flyCameraTo(
+        targetCameraPosition,
+        center,
+        900
+    );
+
+}
+
+
+/* =========================
+   CAMERA FLY
+========================= */
+
+function flyCameraTo(
+    targetPosition,
+    targetLookAt,
+    duration = 900
+) {
+
+    if (flyAnimation) {
+
+        cancelAnimationFrame(
+            flyAnimation
+        );
+
+    }
+
+
+    const startPosition =
+        camera.position.clone();
+
+
+    const startTarget =
+        controls.target.clone();
+
+
+    const startTime =
+        performance.now();
+
+
+    controls.enabled =
+        false;
+
+
+    function animateCamera(now) {
+
+        const progress =
+            Math.min(
+                (
+                    now -
+                    startTime
+                ) / duration,
+                1
+            );
+
+
+        const ease =
+            progress < 0.5
+
+            ? 2 *
+              progress *
+              progress
+
+            : 1 -
+              Math.pow(
+                  -2 * progress + 2,
+                  2
+              ) / 2;
+
+
+        camera.position.lerpVectors(
+            startPosition,
+            targetPosition,
+            ease
+        );
+
+
+        controls.target.lerpVectors(
+            startTarget,
+            targetLookAt,
+            ease
+        );
+
+
+        camera.lookAt(
+            controls.target
+        );
+
+
+        if (
+            progress < 1
+        ) {
+
+            flyAnimation =
+                requestAnimationFrame(
+                    animateCamera
+                );
+
+        }
+
+        else {
+
+            camera.position.copy(
+                targetPosition
+            );
+
+
+            controls.target.copy(
+                targetLookAt
+            );
+
+
+            camera.lookAt(
+                targetLookAt
+            );
+
+
+            controls.enabled =
+                true;
+
+
+            flyAnimation =
+                null;
+
+        }
+
+    }
+
+
+    flyAnimation =
+        requestAnimationFrame(
+            animateCamera
+        );
+
+}
+
+
+/* =========================
+   MENU
+========================= */
+
+function showMenu() {
+
+    currentPage =
+        "menu";
+
+    focusOnObject(
+        menuTargetObj,
+        2.0
+    );
+
+}
+
+
+/* =========================
+   ABOUT ME
+========================= */
+
+function showAboutMe() {
+
+    currentPage =
+        "about";
+
+    focusOnObject(
+        aboutTargetObj,
+        2.0
+    );
+
+}
+
+
+/* =========================
+   GO BACK
+========================= */
+
+function goBack() {
+
+    currentPage =
+        null;
+
+
+    flyCameraTo(
+        defaultCamPos,
+        defaultCamTarget,
+        900
+    );
+
+}
+
+
+/* =========================
+   ANIMATION
+========================= */
+
+function animate() {
+
+    requestAnimationFrame(
+        animate
+    );
+
+
+    if (
+        controls.enabled
+    ) {
+
+        controls.update();
+
+    }
+
+
+    const time =
+        clock.getElapsedTime();
+
+
+    /* =====================
+       UPDATE CURTAIN
+    ===================== */
+
+    curtainShaders.forEach(
+        function(shader) {
+
+            if (
+                shader.uniforms &&
+                shader.uniforms.uTime
+            ) {
+
+                shader.uniforms.uTime.value =
+                    time;
+
+            }
+
+        }
+    );
+
+
+    renderer.render(
+        scene,
+        camera
+    );
+
+}
+
+
+animate();
+
+
+/* =========================
+   RESIZE
+========================= */
+
+window.addEventListener(
+    "resize",
+    function() {
+
+        camera.aspect =
+            window.innerWidth /
+            window.innerHeight;
+
+
+        camera.updateProjectionMatrix();
+
+
+        renderer.setSize(
+            window.innerWidth,
+            window.innerHeight
+        );
+
+    }
+);
+
+</script>
+
+</body>
+</html>
