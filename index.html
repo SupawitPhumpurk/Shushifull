@@ -7,38 +7,20 @@
 <title>3D Model - Shushi</title>
 
 <style>
-html, body {
-    margin: 0;
-    width: 100%;
-    height: 100%;
-    overflow: hidden;
-    background: #1a1a1a;
+html,body{
+    margin:0;
+    width:100%;
+    height:100%;
+    overflow:hidden;
+    background:#1a1a1a;
 }
-
-canvas {
-    display: block;
-    width: 100%;
-    height: 100%;
-}
-
-#loading {
-    position: fixed;
-    inset: 0;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    color: white;
-    font-family: Arial, sans-serif;
-    font-size: 20px;
-    background: #1a1a1a;
-    z-index: 10;
+canvas{
+    display:block;
 }
 </style>
 </head>
 
 <body>
-
-<div id="loading">กำลังโหลดโมเดล...</div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
@@ -48,7 +30,13 @@ canvas {
 <script>
 
 const scene = new THREE.Scene();
+
 scene.background = new THREE.Color(0x1a1a1a);
+
+
+// ===============================
+// CAMERA
+// ===============================
 
 const camera = new THREE.PerspectiveCamera(
     45,
@@ -57,227 +45,300 @@ const camera = new THREE.PerspectiveCamera(
     1000
 );
 
-camera.position.set(0, 2, 8);
+camera.position.set(0,2,8);
+
+
+// ===============================
+// RENDERER
+// ===============================
 
 const renderer = new THREE.WebGLRenderer({
-    antialias: true
+    antialias:true
 });
 
-renderer.setSize(window.innerWidth, window.innerHeight);
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-renderer.outputEncoding = THREE.sRGBEncoding;
-
-document.body.appendChild(renderer.domElement);
-
-
-// =========================
-// LIGHT
-// =========================
-
-const ambientLight = new THREE.AmbientLight(
-    0xffffff,
-    1.0
+renderer.setSize(
+    window.innerWidth,
+    window.innerHeight
 );
+
+renderer.setPixelRatio(
+    Math.min(window.devicePixelRatio,2)
+);
+
+renderer.outputEncoding =
+    THREE.sRGBEncoding;
+
+document.body.appendChild(
+    renderer.domElement
+);
+
+
+// ===============================
+// LIGHT
+// ===============================
+
+const ambientLight =
+    new THREE.AmbientLight(
+        0xffffff,
+        1.0
+    );
 
 scene.add(ambientLight);
 
 
-const directionalLight = new THREE.DirectionalLight(
-    0xffffff,
-    1.2
+const directionalLight =
+    new THREE.DirectionalLight(
+        0xffffff,
+        1.2
+    );
+
+directionalLight.position.set(
+    0,
+    10,
+    10
 );
 
-directionalLight.position.set(0, 10, 10);
 scene.add(directionalLight);
 
 
-// =========================
-// ORBIT CONTROLS
-// =========================
+// ===============================
+// CONTROLS
+// ===============================
 
-const controls = new THREE.OrbitControls(
-    camera,
-    renderer.domElement
-);
+const controls =
+    new THREE.OrbitControls(
+        camera,
+        renderer.domElement
+    );
 
 controls.enableDamping = true;
+
 controls.dampingFactor = 0.08;
 
-controls.mouseButtons.LEFT = THREE.MOUSE.ROTATE;
-controls.mouseButtons.RIGHT = THREE.MOUSE.PAN;
+controls.mouseButtons.LEFT =
+    THREE.MOUSE.ROTATE;
+
+controls.mouseButtons.RIGHT =
+    THREE.MOUSE.PAN;
+
 controls.mouseButtons.MIDDLE = null;
 
 
-// =========================
+// ===============================
 // TOON GRADIENT
-// =========================
+// ===============================
 
-const gradientCanvas = document.createElement("canvas");
+const gradientCanvas =
+    document.createElement("canvas");
 
 gradientCanvas.width = 4;
 gradientCanvas.height = 1;
 
-const gradientContext = gradientCanvas.getContext("2d");
+const gradientContext =
+    gradientCanvas.getContext("2d");
 
-const gradientData = [80, 140, 190, 255];
+const gradientData =
+    [80,140,190,255];
 
-for (let i = 0; i < gradientData.length; i++) {
-    const value = gradientData[i];
+for(let i=0;i<gradientData.length;i++){
+
+    const value =
+        gradientData[i];
 
     gradientContext.fillStyle =
         `rgb(${value},${value},${value})`;
 
-    gradientContext.fillRect(i, 0, 1, 1);
+    gradientContext.fillRect(
+        i,
+        0,
+        1,
+        1
+    );
 }
 
-const toonGradientMap = new THREE.CanvasTexture(
-    gradientCanvas
-);
+const toonGradientMap =
+    new THREE.CanvasTexture(
+        gradientCanvas
+    );
 
-toonGradientMap.minFilter = THREE.NearestFilter;
-toonGradientMap.magFilter = THREE.NearestFilter;
-toonGradientMap.generateMipmaps = false;
+toonGradientMap.minFilter =
+    THREE.NearestFilter;
+
+toonGradientMap.magFilter =
+    THREE.NearestFilter;
+
+toonGradientMap.generateMipmaps =
+    false;
 
 
-// =========================
+// ===============================
 // VARIABLES
-// =========================
+// ===============================
 
 let model = null;
 
-let aboutButtonObj = null;
-let menuButtonObj = null;
-let photoButtonObj = null;
+let button025 = null;
+let button026 = null;
+let button027 = null;
 
-let menuTargetObj = null;
-let aboutTargetObj = null;
-let photoTargetObj = null;
-
-let pageState = "menu";
+let target030 = null;
+let target028 = null;
 
 let flyAnimation = null;
 
-const raycaster = new THREE.Raycaster();
-const mouse = new THREE.Vector2();
+const raycaster =
+    new THREE.Raycaster();
 
-const clock = new THREE.Clock();
+const mouse =
+    new THREE.Vector2();
+
+const clock =
+    new THREE.Clock();
 
 const curtainShaders = [];
 
 
-// =========================
+// ===============================
 // GLTF LOADER
-// =========================
+// ===============================
 
-const loader = new THREE.GLTFLoader();
+const loader =
+    new THREE.GLTFLoader();
 
-const dracoLoader = new THREE.DRACOLoader();
+const dracoLoader =
+    new THREE.DRACOLoader();
 
 dracoLoader.setDecoderPath(
     "https://www.gstatic.com/draco/versioned/decoders/1.5.7/"
 );
 
-loader.setDRACOLoader(dracoLoader);
+loader.setDRACOLoader(
+    dracoLoader
+);
 
+
+// ===============================
+// LOAD MODEL
+// ===============================
 
 loader.load(
 
     "https://supawitphumpurk.github.io/Shushifull/Shushi.glb?v=3",
 
-    function(gltf) {
+    function(gltf){
 
         model = gltf.scene;
 
         scene.add(model);
 
 
-        // =========================
-        // MODEL MATERIAL
-        // =========================
+        // ===============================
+        // MODEL TRAVERSE
+        // ===============================
 
-        model.traverse(function(node) {
+        model.traverse(function(node){
 
-            if (!node.isMesh) return;
+            if(!node.isMesh) return;
+
 
             node.castShadow = true;
+
             node.receiveShadow = true;
+
 
             const originalMap =
                 node.material &&
                 node.material.map
-                    ? node.material.map
-                    : null;
+                ?
+                node.material.map
+                :
+                null;
+
 
             const originalColor =
                 node.material &&
                 node.material.color
-                    ? node.material.color.clone()
-                    : new THREE.Color(0xffffff);
+                ?
+                node.material.color.clone()
+                :
+                new THREE.Color(0xffffff);
 
 
-            // =========================
-            // Icosphere TOON
-            // =========================
+            // ===============================
+            // ICOSPHERE
+            // ===============================
 
-            if (
+            if(
                 node.name === "Icosphere" ||
                 node.name === "Icosphere.001"
-            ) {
+            ){
 
                 node.material =
                     new THREE.MeshToonMaterial({
 
-                        color: originalColor,
+                        color:
+                            originalColor,
 
                         gradientMap:
                             toonGradientMap,
 
-                        side: THREE.DoubleSide
+                        side:
+                            THREE.DoubleSide
 
                     });
 
             }
 
 
-            // =========================
+            // ===============================
             // CYLINDER
-            // =========================
+            // ===============================
 
-            if (node.name.startsWith("Cylinder")) {
+            if(
+                node.name.startsWith(
+                    "Cylinder"
+                )
+            ){
 
                 node.material =
                     new THREE.MeshStandardMaterial({
 
-                        map: originalMap,
+                        map:
+                            originalMap,
 
-                        color: originalColor,
+                        color:
+                            originalColor,
 
-                        metalness: 0.85,
+                        metalness:
+                            0.85,
 
-                        roughness: 0.25,
+                        roughness:
+                            0.25,
 
-                        side: THREE.DoubleSide
+                        side:
+                            THREE.DoubleSide
 
                     });
 
             }
 
 
-            // =========================
-            // CURTAIN Plane.011
-            // =========================
+            // ===============================
+            // CURTAIN
+            // ===============================
 
-            if (
+            if(
                 node.name === "Plane.011" &&
                 node.material
-            ) {
+            ){
 
                 node.material.onBeforeCompile =
-                    function(shader) {
+                    function(shader){
 
                         shader.uniforms.uTime = {
-                            value: 0
+                            value:0
                         };
+
 
                         shader.vertexShader =
                             "uniform float uTime;\n" +
@@ -330,100 +391,116 @@ loader.load(
                                 `
                             );
 
-                        curtainShaders.push(shader);
+
+                        curtainShaders.push(
+                            shader
+                        );
 
                     };
 
-                node.material.needsUpdate = true;
+
+                node.material.needsUpdate =
+                    true;
 
             }
 
 
-            // =========================
+            // ==================================================
             // BUTTONS
-            // =========================
+            // ==================================================
 
-            /*
-                Plane025 -> Plane030
-                Plane026 -> Plane028
-                Plane027 -> Portfolio
-            */
+            // Plane025 -> Plane030
 
-            if (node.name === "Plane025") {
+            if(
+                node.name === "Plane025"
+            ){
 
-                aboutButtonObj = node;
+                button025 = node;
 
             }
 
 
-            if (node.name === "Plane026") {
+            // Plane026 -> Plane028
 
-                menuButtonObj = node;
+            if(
+                node.name === "Plane026"
+            ){
 
-            }
-
-
-            if (node.name === "Plane027") {
-
-                photoButtonObj = node;
+                button026 = node;
 
             }
 
 
-            // =========================
+            // Plane027 -> portfolio
+
+            if(
+                node.name === "Plane027"
+            ){
+
+                button027 = node;
+
+            }
+
+
+            // ==================================================
             // TARGETS
-            // =========================
+            // ==================================================
 
-            if (node.name === "Plane030") {
+            if(
+                node.name === "Plane030"
+            ){
 
-                menuTargetObj = node;
-
-            }
-
-
-            if (node.name === "Plane028") {
-
-                aboutTargetObj = node;
+                target030 = node;
 
             }
 
 
-            if (node.name === "Plane024") {
+            if(
+                node.name === "Plane028"
+            ){
 
-                photoTargetObj = node;
+                target028 = node;
 
             }
 
         });
 
 
-        // =========================
-        // ROTATION
-        // =========================
+        // ===============================
+        // MODEL ROTATION
+        // ===============================
 
-        model.rotation.y = -Math.PI / 2;
+        model.rotation.y =
+            -Math.PI / 2;
 
 
-        // =========================
+        // ===============================
         // CENTER MODEL
-        // =========================
+        // ===============================
 
-        const box = new THREE.Box3().setFromObject(model);
+        const box =
+            new THREE.Box3()
+                .setFromObject(model);
 
-        const center = box.getCenter(
-            new THREE.Vector3()
+        const center =
+            box.getCenter(
+                new THREE.Vector3()
+            );
+
+        const size =
+            box.getSize(
+                new THREE.Vector3()
+            );
+
+
+        model.position.sub(
+            center
         );
 
-        const size = box.getSize(
-            new THREE.Vector3()
-        );
 
-        model.position.sub(center);
-
-
-        // =========================
-        // CAMERA DISTANCE
-        // =========================
+        // ===============================
+        // CAMERA
+        // ===============================
 
         const maxDimension =
             Math.max(
@@ -431,6 +508,7 @@ loader.load(
                 size.y,
                 size.z
             );
+
 
         const distance =
             maxDimension /
@@ -440,139 +518,153 @@ loader.load(
                 )
             );
 
+
         camera.position.set(
             0,
             maxDimension * 0.2,
             distance * 0.8
         );
 
-        camera.lookAt(0, 0, 0);
 
-        controls.target.set(0, 0, 0);
+        camera.lookAt(
+            0,
+            0,
+            0
+        );
+
+
+        controls.target.set(
+            0,
+            0,
+            0
+        );
+
 
         controls.update();
 
 
-        // =========================
-        // LOADING OFF
-        // =========================
-
-        document.getElementById(
-            "loading"
-        ).style.display = "none";
-
-
-        // =========================
-        // DEBUG BUTTON NAMES
-        // =========================
+        // ===============================
+        // DEBUG
+        // ===============================
 
         console.log(
-            "Plane025 = ",
-            aboutButtonObj
+            "Plane025 =",
+            button025
         );
 
         console.log(
-            "Plane026 = ",
-            menuButtonObj
+            "Plane026 =",
+            button026
         );
 
         console.log(
-            "Plane027 = ",
-            photoButtonObj
+            "Plane027 =",
+            button027
         );
 
         console.log(
-            "Plane030 = ",
-            menuTargetObj
+            "Plane030 =",
+            target030
         );
 
         console.log(
-            "Plane028 = ",
-            aboutTargetObj
+            "Plane028 =",
+            target028
+        );
+
+
+        console.log(
+            "MODEL LOADED"
         );
 
     },
 
-    function(xhr) {
 
-        if (xhr.total) {
+    function(xhr){
 
-            const percent =
-                (xhr.loaded / xhr.total) * 100;
+        if(xhr.total){
 
-            document.getElementById(
-                "loading"
-            ).innerText =
-                "กำลังโหลดโมเดล " +
-                Math.round(percent) +
-                "%";
+            console.log(
+                "Loading:",
+                (
+                    xhr.loaded /
+                    xhr.total *
+                    100
+                ).toFixed(0) + "%"
+            );
 
         }
 
     },
 
-    function(error) {
+
+    function(error){
 
         console.error(
-            "โหลดโมเดลไม่สำเร็จ:",
+            "GLB ERROR:",
             error
         );
-
-        document.getElementById(
-            "loading"
-        ).innerText =
-            "โหลดโมเดลไม่สำเร็จ";
 
     }
 
 );
 
 
-// =========================
-// CHECK OBJECT / CHILD
-// =========================
+// ===============================
+// OBJECT CHECK
+// ===============================
 
 function isObjectOrChild(
     object,
     target
-) {
+){
 
-    let current = object;
+    let current =
+        object;
 
-    while (current) {
 
-        if (current === target) {
+    while(current){
+
+        if(current === target){
 
             return true;
 
         }
 
-        current = current.parent;
+        current =
+            current.parent;
 
     }
+
 
     return false;
 
 }
 
 
-// =========================
+// ===============================
 // CAMERA FOCUS
-// =========================
+// ===============================
 
-function focusOnObject(target) {
+function focusOnObject(
+    target
+){
 
-    if (!target) return;
+    if(!target) return null;
 
 
     const box =
         new THREE.Box3()
-            .setFromObject(target);
+            .setFromObject(
+                target
+            );
+
 
     const center =
         box.getCenter(
             new THREE.Vector3()
         );
+
 
     const size =
         box.getSize(
@@ -591,4 +683,371 @@ function focusOnObject(target) {
     const distance =
         maxDimension * 4;
 
+
+    return {
+
+        position:
+            new THREE.Vector3(
+                center.x,
+                center.y,
+                center.z +
+                distance
+            ),
+
+        target:
+            center.clone()
+
+    };
+
+}
+
+
+// ===============================
+// FLY CAMERA
+// ===============================
+
+function flyCameraTo(
+    target
+){
+
+    if(!target) return;
+
+
+    const result =
+        focusOnObject(
+            target
+        );
+
+
+    if(!result) return;
+
+
+    flyAnimation = {
+
+        startTime:
+            performance.now(),
+
+        duration:
+            900,
+
+        startPosition:
+            camera.position.clone(),
+
+        endPosition:
+            result.position.clone(),
+
+        startTarget:
+            controls.target.clone(),
+
+        endTarget:
+            result.target.clone()
+
+    };
+
+}
+
+
+// ===============================
+// CLICK
+// ===============================
+
+renderer.domElement.addEventListener(
+    "click",
+    function(event){
+
+        if(!model) return;
+
+
+        // ไม่ล็อกการกดระหว่างกล้องเคลื่อน
+        // เพื่อให้ปุ่มยังตรวจสอบได้
+
+
+        const rect =
+            renderer.domElement
+                .getBoundingClientRect();
+
+
+        mouse.x =
+            (
+                event.clientX -
+                rect.left
+            )
+            /
+            rect.width
+            * 2 - 1;
+
+
+        mouse.y =
+            -(
+                (
+                    event.clientY -
+                    rect.top
+                )
+                /
+                rect.height
+            )
+            * 2 + 1;
+
+
+        raycaster.setFromCamera(
+            mouse,
+            camera
+        );
+
+
+        const intersects =
+            raycaster.intersectObject(
+                model,
+                true
+            );
+
+
+        if(
+            intersects.length === 0
+        ){
+
+            return;
+
+        }
+
+
+        // ===============================
+        // ตรวจทุกจุดที่โดนคลิก
+        // ===============================
+
+        for(
+            let i = 0;
+            i < intersects.length;
+            i++
+        ){
+
+            const hit =
+                intersects[i];
+
+
+            console.log(
+                "CLICK OBJECT:",
+                hit.object.name
+            );
+
+
+            // ===============================
+            // Plane025 -> Plane030
+            // ===============================
+
+            if(
+                button025 &&
+                isObjectOrChild(
+                    hit.object,
+                    button025
+                )
+            ){
+
+                console.log(
+                    "Plane025 -> Plane030"
+                );
+
+
+                flyCameraTo(
+                    target030
+                );
+
+
+                return;
+
+            }
+
+
+            // ===============================
+            // Plane026 -> Plane028
+            // ===============================
+
+            if(
+                button026 &&
+                isObjectOrChild(
+                    hit.object,
+                    button026
+                )
+            ){
+
+                console.log(
+                    "Plane026 -> Plane028"
+                );
+
+
+                flyCameraTo(
+                    target028
+                );
+
+
+                return;
+
+            }
+
+
+            // ===============================
+            // Plane027 -> PORTFOLIO
+            // ===============================
+
+            if(
+                button027 &&
+                isObjectOrChild(
+                    hit.object,
+                    button027
+                )
+            ){
+
+                console.log(
+                    "Plane027 -> portfolio"
+                );
+
+
+                window.location.href =
+                    "portfolio.html";
+
+
+                return;
+
+            }
+
+        }
+
+    }
+);
+
+
+// ===============================
+// ANIMATION
+// ===============================
+
+function animate(){
+
+    requestAnimationFrame(
+        animate
+    );
+
+
+    const time =
+        clock.getElapsedTime();
+
+
+    // ===============================
+    // CURTAIN
+    // ===============================
+
+    curtainShaders.forEach(
+        function(shader){
+
+            shader.uniforms.uTime.value =
+                time;
+
+        }
+    );
+
+
+    // ===============================
+    // CAMERA FLY
+    // ===============================
+
+    if(flyAnimation){
+
+        const elapsed =
+            performance.now()
+            -
+            flyAnimation.startTime;
+
+
+        let progress =
+            elapsed /
+            flyAnimation.duration;
+
+
+        if(progress >= 1){
+
+            progress = 1;
+
+        }
+
+
+        const eased =
+            1 -
+            Math.pow(
+                1 - progress,
+                3
+            );
+
+
+        camera.position.lerpVectors(
+
+            flyAnimation.startPosition,
+
+            flyAnimation.endPosition,
+
+            eased
+
+        );
+
+
+        controls.target.lerpVectors(
+
+            flyAnimation.startTarget,
+
+            flyAnimation.endTarget,
+
+            eased
+
+        );
+
+
+        if(progress >= 1){
+
+            flyAnimation = null;
+
+        }
+
+    }
+
+
+    controls.update();
+
+
+    renderer.render(
+        scene,
+        camera
+    );
+
+}
+
+
+animate();
+
+
+// ===============================
+// RESIZE
+// ===============================
+
+window.addEventListener(
+    "resize",
+    function(){
+
+        camera.aspect =
+            window.innerWidth /
+            window.innerHeight;
+
+
+        camera.updateProjectionMatrix();
+
+
+        renderer.setSize(
+            window.innerWidth,
+            window.innerHeight
+        );
+
+    }
+);
+
+</script>
+
+</body>
+</html>
 ```
