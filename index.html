@@ -12,7 +12,6 @@ canvas{display:block}
 </style>
 </head>
 <body>
-
 <button id="backButton">← กลับ</button>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -49,7 +48,6 @@ controls.mouseButtons.MIDDLE=null;
 
 const backButton=document.getElementById("backButton");
 
-/* TOON GRADIENT */
 const gradientCanvas=document.createElement("canvas");
 gradientCanvas.width=4;
 gradientCanvas.height=1;
@@ -68,37 +66,27 @@ toonGradientMap.minFilter=THREE.NearestFilter;
 toonGradientMap.magFilter=THREE.NearestFilter;
 toonGradientMap.generateMipmaps=false;
 
-/* OBJECTS */
 let model=null;
 let button025=null;
 let button026=null;
 let button027=null;
 let menuTarget016=null;
 let infoTarget017=null;
-
 let pageState="main";
 let flyAnimation=null;
 
 const raycaster=new THREE.Raycaster();
 const mouse=new THREE.Vector2();
 const clock=new THREE.Clock();
-
 const curtainShaders=[];
 
-/* GLTF */
 const loader=new THREE.GLTFLoader();
 const dracoLoader=new THREE.DRACOLoader();
 
-dracoLoader.setDecoderPath(
-"https://www.gstatic.com/draco/versioned/decoders/1.5.7/"
-);
-
+dracoLoader.setDecoderPath("https://www.gstatic.com/draco/versioned/decoders/1.5.7/");
 loader.setDRACOLoader(dracoLoader);
 
-loader.load(
-"https://supawitphumpurk.github.io/Shushifull/Shushi.glb?v=3",
-
-function(gltf){
+loader.load("https://supawitphumpurk.github.io/Shushifull/Shushi.glb?v=3",function(gltf){
 
 model=gltf.scene;
 scene.add(model);
@@ -110,45 +98,23 @@ if(!node.isMesh)return;
 node.castShadow=true;
 node.receiveShadow=true;
 
-const originalMap=
-node.material&&node.material.map
-?node.material.map
-:null;
+const originalMap=node.material&&node.material.map?node.material.map:null;
+const originalColor=node.material&&node.material.color?node.material.color.clone():new THREE.Color(0xffffff);
 
-const originalColor=
-node.material&&node.material.color
-?node.material.color.clone()
-:new THREE.Color(0xffffff);
-
-
-/* BUTTON / TARGET */
-if(
-["Plane025","Plane026","Plane027","Plane016","Plane017"].includes(node.name)
-&&node.material
-){
+if(["Plane025","Plane026","Plane027","Plane016","Plane017"].includes(node.name)&&node.material){
 node.material.side=THREE.DoubleSide;
 node.material.needsUpdate=true;
 }
 
-
-/* TOON */
-if(
-node.name==="Icosphere"||
-node.name==="Icosphere.001"
-){
-
+if(node.name==="Icosphere"||node.name==="Icosphere.001"){
 node.material=new THREE.MeshToonMaterial({
 color:originalColor,
 gradientMap:toonGradientMap,
 side:THREE.DoubleSide
 });
-
 }
 
-
-/* METAL */
 if(node.name.startsWith("Cylinder")){
-
 node.material=new THREE.MeshStandardMaterial({
 map:originalMap,
 color:originalColor,
@@ -156,273 +122,149 @@ metalness:.85,
 roughness:.25,
 side:THREE.DoubleSide
 });
-
 }
 
-
-/* =====================================================
-   PLANE.011 - VERTEX WAVE / CLOTH
-===================================================== */
-
+/* ================================
+   PLANE.011 - VERTEX ANIMATION
+================================ */
 if(node.name==="Plane.011"&&node.material){
 
 const geometry=node.geometry;
-
-/* คำนวณตำแหน่งบนสุดและล่างสุดของ Plane.011 */
 geometry.computeBoundingBox();
 
 const minY=geometry.boundingBox.min.y;
 const maxY=geometry.boundingBox.max.y;
 
-console.log("Plane.011 vertices:",
-geometry.attributes.position.count);
-
+console.log("Plane.011 vertices:",geometry.attributes.position.count);
 console.log("Plane.011 minY:",minY);
 console.log("Plane.011 maxY:",maxY);
 
-
-/* SHADER */
 node.material.onBeforeCompile=function(shader){
 
-/* TIME */
-shader.uniforms.uTime={
-value:0
-};
+shader.uniforms.uTime={value:0};
+shader.uniforms.uMinY={value:minY};
+shader.uniforms.uMaxY={value:maxY};
 
-/* ตำแหน่งบน/ล่างจริง */
-shader.uniforms.uMinY={
-value:minY
-};
-
-shader.uniforms.uMaxY={
-value:maxY
-};
-
-
-/* เพิ่ม Uniform เข้า Vertex Shader */
-shader.vertexShader=
-`
+shader.vertexShader=`
 uniform float uTime;
 uniform float uMinY;
 uniform float uMaxY;
-`+
-shader.vertexShader;
+`+shader.vertexShader;
 
-
-/* แก้ตำแหน่ง Vertex */
-shader.vertexShader=
-shader.vertexShader.replace(
-"#include <begin_vertex",
-
+shader.vertexShader=shader.vertexShader.replace(
+"#include <begin_vertex>",
 `
 #include <begin_vertex>
 
-/* =========================================
-   NORMALIZED HEIGHT
-   0 = ด้านล่าง
-   1 = ด้านบน
-========================================= */
+float t=uTime;
 
-float height01=
-clamp(
-(position.y-uMinY)/
-max(uMaxY-uMinY,0.001),
+/* ตำแหน่งความสูงของ Vertex
+   0 = ล่างสุด
+   1 = บนสุด */
+float height01=clamp(
+(position.y-uMinY)/max(uMaxY-uMinY,0.001),
 0.0,
 1.0
 );
 
+/* ด้านล่างขยับเยอะ ด้านบนขยับน้อย */
+float bottom=1.0-height01;
+float movement=pow(bottom,1.5);
 
-/* =========================================
-   MOVEMENT MASK
-   ด้านล่างขยับมาก
-========================================= */
-
-float bottom=
-1.0-height01;
-
-/* ทำให้ช่วงบนเกือบนิ่ง */
-float movement=
-pow(bottom,1.35);
-
-
-/* =========================================
-   WAVE 1
-   คลื่นใหญ่
-========================================= */
-
-float wave1=
-sin(
+/* คลื่นใหญ่ */
+float wave1=sin(
+position.x*4.5+
 position.y*5.0+
-position.x*2.5+
-uTime*1.8
+t*1.8
 );
 
-
-/* =========================================
-   WAVE 2
-   คลื่นอีกทิศ
-========================================= */
-
-float wave2=
-sin(
-position.y*8.0+
-position.x*4.0+
-uTime*2.5+
-1.5
+/* คลื่นที่สอง */
+float wave2=sin(
+position.x*8.0+
+position.y*3.0+
+t*2.4
 );
 
-
-/* =========================================
-   WAVE 3
-   คลื่นลึก
-========================================= */
-
-float wave3=
-cos(
-position.x*6.0+
-position.y*3.5+
-uTime*1.4
+/* คลื่นลึก */
+float wave3=cos(
+position.x*5.5+
+position.y*7.0+
+t*1.35
 );
 
-
-/* =========================================
-   DETAIL
-   ทำให้ผ้าไม่เรียบเกินไป
-========================================= */
-
-float detail=
-sin(
+/* คลื่นละเอียด */
+float wave4=sin(
 position.x*14.0+
 position.y*9.0+
-uTime*4.0
+t*3.8
 );
 
-
-/* =========================================
-   รวมคลื่น
-========================================= */
-
+/* รวมคลื่น */
 float wave=
-wave1*0.12+
+wave1*0.13+
 wave2*0.07+
-wave3*0.055+
-detail*0.018;
+wave3*0.05+
+wave4*0.018;
 
+/* พริ้วซ้าย-ขวา */
+transformed.x+=wave*movement;
 
-/* =========================================
-   MAIN SWAY
-========================================= */
+/* พริ้วเข้า-ออก */
+transformed.z+=wave*0.5*movement;
 
-transformed.x+=
-wave*
-movement;
-
-
-/* =========================================
-   ขยับลึกเข้า-ออก
-========================================= */
-
-transformed.z+=
-wave*
-0.45*
-movement;
-
-
-/* =========================================
-   ปลายล่างกระเพื่อมขึ้นลงเล็กน้อย
-========================================= */
-
+/* ปลายล่างขยับขึ้นลง */
 transformed.y+=
-sin(
-position.x*5.0+
-uTime*2.0
-)*
+sin(position.x*6.0+t*2.0)*
 0.035*
 movement;
 
-
-/* =========================================
-   EXTRA BOTTOM SWAY
-   เพิ่มเฉพาะปลายล่างสุด
-========================================= */
-
-float bottomEdge=
-smoothstep(
-0.45,
-1.0,
-bottom
-);
+/* เพิ่มการสะบัดเฉพาะปลาย */
+float edge=smoothstep(0.45,1.0,bottom);
 
 transformed.x+=
-sin(
-position.x*8.0+
-uTime*2.8
-)*
+sin(position.x*9.0+t*2.8)*
 0.045*
-bottomEdge;
+edge;
 
 transformed.z+=
-cos(
-position.x*7.0+
-uTime*2.2
-)*
+cos(position.x*8.0+t*2.2)*
 0.025*
-bottomEdge;
-
+edge;
 `
 );
 
-curtainShaders.push(shader);
+console.log("Plane.011 vertex shader applied");
 
+curtainShaders.push(shader);
 };
 
 node.material.side=THREE.DoubleSide;
 node.material.needsUpdate=true;
-
 }
 
+/* OBJECTS */
 
-/* SAVE OBJECTS */
-
-if(node.name==="Plane025")
-button025=node;
-
-if(node.name==="Plane026")
-button026=node;
-
-if(node.name==="Plane027")
-button027=node;
-
-if(node.name==="Plane016")
-menuTarget016=node;
-
-if(node.name==="Plane017")
-infoTarget017=node;
+if(node.name==="Plane025")button025=node;
+if(node.name==="Plane026")button026=node;
+if(node.name==="Plane027")button027=node;
+if(node.name==="Plane016")menuTarget016=node;
+if(node.name==="Plane017")infoTarget017=node;
 
 });
 
-
-/* MODEL ROTATION */
+/* MODEL */
 model.rotation.y=-Math.PI/2;
 
-
-/* CENTER MODEL */
 const box=new THREE.Box3().setFromObject(model);
 const center=box.getCenter(new THREE.Vector3());
 const size=box.getSize(new THREE.Vector3());
 
 model.position.sub(center);
 
+const maxDimension=Math.max(size.x,size.y,size.z);
 
-/* CAMERA */
-const maxDimension=
-Math.max(size.x,size.y,size.z);
-
-const distance=
-maxDimension/
-Math.tan(
-THREE.MathUtils.degToRad(camera.fov/2)
-);
+const distance=maxDimension/
+Math.tan(THREE.MathUtils.degToRad(camera.fov/2));
 
 camera.position.set(
 0,
@@ -442,261 +284,123 @@ console.log("Plane027:",button027);
 console.log("Plane016:",menuTarget016);
 console.log("Plane017:",infoTarget017);
 
-},
-
-function(xhr){
+},function(xhr){
 
 if(xhr.total){
-
 console.log(
 "Loading:",
 (xhr.loaded/xhr.total*100).toFixed(0)+"%"
 );
-
 }
 
-},
+},function(error){
+console.error("GLB ERROR:",error);
+});
 
-function(error){
-
-console.error(
-"GLB ERROR:",
-error
-);
-
-}
-);
-
-
-/* =====================================================
-   CHECK CHILD
-===================================================== */
-
+/* CHECK CHILD */
 function isObjectOrChild(object,target){
-
 let current=object;
 
 while(current){
-
-if(current===target)
-return true;
-
+if(current===target)return true;
 current=current.parent;
-
 }
 
 return false;
-
 }
 
-
-/* =====================================================
-   FOCUS CAMERA
-===================================================== */
-
+/* CAMERA FOCUS */
 function focusOnObject(target){
+if(!target)return null;
 
-if(!target)
-return null;
+const box=new THREE.Box3().setFromObject(target);
+const center=box.getCenter(new THREE.Vector3());
+const size=box.getSize(new THREE.Vector3());
 
-const box=
-new THREE.Box3().setFromObject(target);
-
-const center=
-box.getCenter(new THREE.Vector3());
-
-const size=
-box.getSize(new THREE.Vector3());
-
-const distance=
-Math.max(
+const distance=Math.max(
 size.x,
 size.y,
 size.z
 )*4;
 
 return{
-
 position:new THREE.Vector3(
 center.x,
 center.y,
 center.z+distance
 ),
-
 target:center.clone()
-
 };
-
 }
 
-
-/* =====================================================
-   FLY CAMERA
-===================================================== */
-
+/* CAMERA FLY */
 function flyCameraTo(target){
+if(!target)return;
 
-if(!target)
-return;
-
-const result=
-focusOnObject(target);
-
-if(!result)
-return;
+const result=focusOnObject(target);
+if(!result)return;
 
 flyAnimation={
-
 startTime:performance.now(),
-
 duration:900,
-
-startPosition:
-camera.position.clone(),
-
-endPosition:
-result.position.clone(),
-
-startTarget:
-controls.target.clone(),
-
-endTarget:
-result.target.clone()
-
+startPosition:camera.position.clone(),
+endPosition:result.position.clone(),
+startTarget:controls.target.clone(),
+endTarget:result.target.clone()
 };
-
 }
 
+/* CLICK */
+renderer.domElement.addEventListener("click",function(event){
 
-/* =====================================================
-   CLICK MODEL
-===================================================== */
+if(!model)return;
 
-renderer.domElement.addEventListener(
-"click",
-function(event){
+const rect=renderer.domElement.getBoundingClientRect();
 
-if(!model)
-return;
+mouse.x=(event.clientX-rect.left)/rect.width*2-1;
+mouse.y=-((event.clientY-rect.top)/rect.height)*2+1;
 
-const rect=
-renderer.domElement.getBoundingClientRect();
+raycaster.setFromCamera(mouse,camera);
 
-mouse.x=
-(event.clientX-rect.left)/
-rect.width*2-1;
+const intersects=raycaster.intersectObject(model,true);
 
-mouse.y=
--(
-(event.clientY-rect.top)/
-rect.height
-)*2+1;
+if(!intersects.length)return;
 
-raycaster.setFromCamera(
-mouse,
-camera
-);
-
-const intersects=
-raycaster.intersectObject(
-model,
-true
-);
-
-if(!intersects.length)
-return;
-
-for(
-let i=0;
-i<intersects.length;
-i++
-){
+for(let i=0;i<intersects.length;i++){
 
 const hit=intersects[i];
 
-console.log(
-"CLICK:",
-hit.object.name
-);
-
-
-/* MAIN PAGE */
+console.log("CLICK:",hit.object.name);
 
 if(pageState==="main"){
 
-/* MENU */
-
-if(
-button025&&
-isObjectOrChild(
-hit.object,
-button025
-)
-){
-
+if(button025&&isObjectOrChild(hit.object,button025)){
 flyCameraTo(menuTarget016);
-
 pageState="menu";
-
 backButton.style.display="block";
-
 return;
-
 }
 
-
-/* INFO */
-
-if(
-button026&&
-isObjectOrChild(
-hit.object,
-button026
-)
-){
-
+if(button026&&isObjectOrChild(hit.object,button026)){
 flyCameraTo(infoTarget017);
-
 pageState="info";
-
 backButton.style.display="block";
-
 return;
-
 }
 
-
-/* PORTFOLIO */
-
-if(
-button027&&
-isObjectOrChild(
-hit.object,
-button027
-)
-){
-
+if(button027&&isObjectOrChild(hit.object,button027)){
 window.location.href="portfolio.html";
-
 return;
-
 }
 
 }
 
 }
 
-}
-);
+});
 
-
-/* =====================================================
-   BACK BUTTON
-===================================================== */
-
-backButton.addEventListener(
-"click",
-function(){
+/* BACK */
+backButton.addEventListener("click",function(){
 
 flyCameraHome();
 
@@ -704,98 +408,58 @@ pageState="main";
 
 backButton.style.display="none";
 
-}
-);
+});
 
-
-/* =====================================================
-   HOME CAMERA
-===================================================== */
-
+/* HOME CAMERA */
 function flyCameraHome(){
 
-if(!model)
-return;
+if(!model)return;
 
-const box=
-new THREE.Box3().setFromObject(model);
+const box=new THREE.Box3().setFromObject(model);
+const center=box.getCenter(new THREE.Vector3());
+const size=box.getSize(new THREE.Vector3());
 
-const center=
-box.getCenter(new THREE.Vector3());
-
-const size=
-box.getSize(new THREE.Vector3());
-
-const maxDimension=
-Math.max(
+const maxDimension=Math.max(
 size.x,
 size.y,
 size.z
 );
 
-const distance=
-maxDimension/
+const distance=maxDimension/
 Math.tan(
 THREE.MathUtils.degToRad(
 camera.fov/2
 )
 );
 
-const homePosition=
-new THREE.Vector3(
+const homePosition=new THREE.Vector3(
 0,
 maxDimension*.2,
 distance*.8
 );
 
 flyAnimation={
-
-startTime:
-performance.now(),
-
+startTime:performance.now(),
 duration:900,
-
-startPosition:
-camera.position.clone(),
-
-endPosition:
-homePosition,
-
-startTarget:
-controls.target.clone(),
-
-endTarget:
-new THREE.Vector3(0,0,0)
-
+startPosition:camera.position.clone(),
+endPosition:homePosition,
+startTarget:controls.target.clone(),
+endTarget:new THREE.Vector3(0,0,0)
 };
 
 }
 
-
-/* =====================================================
-   ANIMATION
-===================================================== */
-
+/* ANIMATION */
 function animate(){
 
-requestAnimationFrame(
-animate
-);
+requestAnimationFrame(animate);
 
-const time=
-clock.getElapsedTime();
-
+const time=clock.getElapsedTime();
 
 /* PLANE.011 */
-curtainShaders.forEach(
-function(shader){
-
-shader.uniforms.uTime.value=
-time;
-
-}
-);
-
+curtainShaders.forEach(function(shader){
+shader.uniforms.uTime.value=time;
+});
 
 /* CAMERA */
 if(flyAnimation){
@@ -805,20 +469,12 @@ performance.now()-
 flyAnimation.startTime;
 
 let progress=
-elapsed/
-flyAnimation.duration;
+elapsed/flyAnimation.duration;
 
-if(progress>=1)
-progress=1;
+if(progress>=1)progress=1;
 
-
-/* SMOOTH EASING */
 const eased=
-1-Math.pow(
-1-progress,
-3
-);
-
+1-Math.pow(1-progress,3);
 
 camera.position.lerpVectors(
 flyAnimation.startPosition,
@@ -832,37 +488,23 @@ flyAnimation.endTarget,
 eased
 );
 
-
 if(progress>=1){
 flyAnimation=null;
 }
 
 }
 
-
 controls.update();
-
-renderer.render(
-scene,
-camera
-);
-
+renderer.render(scene,camera);
 }
 
 animate();
 
-
-/* =====================================================
-   RESIZE
-===================================================== */
-
-window.addEventListener(
-"resize",
-function(){
+/* RESIZE */
+window.addEventListener("resize",function(){
 
 camera.aspect=
-window.innerWidth/
-window.innerHeight;
+window.innerWidth/window.innerHeight;
 
 camera.updateProjectionMatrix();
 
@@ -871,9 +513,7 @@ window.innerWidth,
 window.innerHeight
 );
 
-}
-);
-
+});
 </script>
 </body>
 </html>
