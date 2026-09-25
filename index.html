@@ -1,126 +1,4 @@
-<!DOCTYPE html>
-<html lang="th">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>3D Model - Shushi</title>
-<style>
-html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#1a1a1a}
-canvas{display:block}
-#backButton{display:none;position:fixed;top:25px;left:25px;z-index:10;padding:12px 22px;border:1px solid rgba(255,255,255,.35);border-radius:12px;background:rgba(0,0,0,.55);color:#fff;font-size:16px;font-family:Arial,sans-serif;cursor:pointer;backdrop-filter:blur(8px);transition:.25s}
-#backButton:hover{background:rgba(255,255,255,.18);transform:translateY(-2px)}
-</style>
-</head>
-<body>
-<button id="backButton">← กลับ</button>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/DRACOLoader.js"></script>
-<script>
-const scene=new THREE.Scene();
-scene.background=new THREE.Color(0x1a1a1a);
-
-const camera=new THREE.PerspectiveCamera(45,window.innerWidth/window.innerHeight,.1,1000);
-camera.position.set(0,2,8);
-
-const renderer=new THREE.WebGLRenderer({antialias:true});
-renderer.setSize(window.innerWidth,window.innerHeight);
-renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
-renderer.outputEncoding=THREE.sRGBEncoding;
-document.body.appendChild(renderer.domElement);
-
-const ambientLight=new THREE.AmbientLight(0xffffff,1);
-scene.add(ambientLight);
-
-const directionalLight=new THREE.DirectionalLight(0xffffff,1.2);
-directionalLight.position.set(0,10,10);
-scene.add(directionalLight);
-
-const controls=new THREE.OrbitControls(camera,renderer.domElement);
-controls.enableDamping=true;
-controls.dampingFactor=.08;
-controls.mouseButtons.LEFT=THREE.MOUSE.ROTATE;
-controls.mouseButtons.RIGHT=THREE.MOUSE.PAN;
-controls.mouseButtons.MIDDLE=null;
-
-const backButton=document.getElementById("backButton");
-
-const gradientCanvas=document.createElement("canvas");
-gradientCanvas.width=4;
-gradientCanvas.height=1;
-const gradientContext=gradientCanvas.getContext("2d");
-const gradientData=[80,140,190,255];
-
-for(let i=0;i<gradientData.length;i++){
-const value=gradientData[i];
-gradientContext.fillStyle=`rgb(${value},${value},${value})`;
-gradientContext.fillRect(i,0,1,1);
-}
-
-const toonGradientMap=new THREE.CanvasTexture(gradientCanvas);
-toonGradientMap.minFilter=THREE.NearestFilter;
-toonGradientMap.magFilter=THREE.NearestFilter;
-toonGradientMap.generateMipmaps=false;
-
-let model=null;
-let button025=null;
-let button026=null;
-let button027=null;
-let menuTarget016=null;
-let infoTarget017=null;
-let pageState="main";
-let flyAnimation=null;
-
-const raycaster=new THREE.Raycaster();
-const mouse=new THREE.Vector2();
-const clock=new THREE.Clock();
-const curtainShaders=[];
-
-const loader=new THREE.GLTFLoader();
-const dracoLoader=new THREE.DRACOLoader();
-dracoLoader.setDecoderPath("https://www.gstatic.com/draco/versioned/decoders/1.5.7/");
-loader.setDRACOLoader(dracoLoader);
-
-loader.load("https://supawitphumpurk.github.io/Shushifull/Shushi.glb?v=3",function(gltf){
-model=gltf.scene;
-scene.add(model);
-
-model.traverse(function(node){
-if(!node.isMesh)return;
-
-node.castShadow=true;
-node.receiveShadow=true;
-
-const originalMap=node.material&&node.material.map?node.material.map:null;
-const originalColor=node.material&&node.material.color?node.material.color.clone():new THREE.Color(0xffffff);
-
-if(["Plane025","Plane026","Plane027","Plane016","Plane017"].includes(node.name)&&node.material){
-node.material.side=THREE.DoubleSide;
-node.material.needsUpdate=true;
-}
-
-if(node.name==="Icosphere"||node.name==="Icosphere.001"){
-node.material=new THREE.MeshToonMaterial({
-color:originalColor,
-gradientMap:toonGradientMap,
-side:THREE.DoubleSide
-});
-}
-
-if(node.name.startsWith("Cylinder")){
-node.material=new THREE.MeshStandardMaterial({
-map:originalMap,
-color:originalColor,
-metalness:.85,
-roughness:.25,
-side:THREE.DoubleSide
-});
-}
-
 if(node.name==="Plane.011"&&node.material){
-console.log("Plane.011 vertices:",node.geometry.attributes.position.count);
-
 node.material.onBeforeCompile=function(shader){
 shader.uniforms.uTime={value:0};
 shader.vertexShader="uniform float uTime;\n"+shader.vertexShader;
@@ -129,216 +7,33 @@ shader.vertexShader=shader.vertexShader.replace("#include <begin_vertex>",`
 #include <begin_vertex>
 
 float t=uTime;
-float wave1=sin(position.y*4.0+t*2.0);
-float wave2=sin(position.x*6.0+t*2.8);
-float wave3=sin(position.x*12.0+t*4.0);
-float wave4=sin((position.x+position.y)*7.0+t*2.2);
 
-float wave=wave1*0.12+wave2*0.10+wave3*0.045+wave4*0.04;
+/* ค่าความสูงของจุด */
+float height=position.y;
 
-float top=min(max((position.y+1.0)/2.0,0.0),1.0);
-float movement=1.0-top;
+/* ด้านล่างขยับมาก ด้านบนขยับน้อย */
+float bottom=min(max((height+1.0)/2.0,0.0),1.0);
+float strength=1.0-bottom;
 
-transformed.x+=wave*movement;
-transformed.z+=wave*0.45*movement;
+/* คลื่นหลัก */
+float waveX=sin(t*2.2+position.y*5.0+position.x*2.0);
+float waveZ=cos(t*1.8+position.y*4.0+position.x*3.0);
+
+/* คลื่นเล็กเพิ่มความเป็นธรรมชาติ */
+float smallWave=sin(t*4.0+position.x*10.0+position.y*3.0);
+
+/* ขยับเฉพาะช่วงล่าง */
+transformed.x+=waveX*0.16*strength;
+transformed.z+=waveZ*0.10*strength;
+transformed.x+=smallWave*0.025*strength;
+
+/* ให้ปลายล่างแกว่งมากขึ้น */
+transformed.y+=sin(t*2.0+position.x*5.0)*0.025*strength;
 `);
+
 curtainShaders.push(shader);
 };
 
 node.material.side=THREE.DoubleSide;
 node.material.needsUpdate=true;
 }
-
-if(node.name==="Plane025")button025=node;
-if(node.name==="Plane026")button026=node;
-if(node.name==="Plane027")button027=node;
-if(node.name==="Plane016")menuTarget016=node;
-if(node.name==="Plane017")infoTarget017=node;
-});
-
-model.rotation.y=-Math.PI/2;
-
-const box=new THREE.Box3().setFromObject(model);
-const center=box.getCenter(new THREE.Vector3());
-const size=box.getSize(new THREE.Vector3());
-
-model.position.sub(center);
-
-const maxDimension=Math.max(size.x,size.y,size.z);
-const distance=maxDimension/Math.tan(THREE.MathUtils.degToRad(camera.fov/2));
-
-camera.position.set(0,maxDimension*.2,distance*.8);
-camera.lookAt(0,0,0);
-
-controls.target.set(0,0,0);
-controls.update();
-
-console.log("MODEL LOADED");
-console.log("Plane025:",button025);
-console.log("Plane026:",button026);
-console.log("Plane027:",button027);
-console.log("Plane016:",menuTarget016);
-console.log("Plane017:",infoTarget017);
-
-},function(xhr){
-if(xhr.total){
-console.log("Loading:",(xhr.loaded/xhr.total*100).toFixed(0)+"%");
-}
-},function(error){
-console.error("GLB ERROR:",error);
-});
-
-function isObjectOrChild(object,target){
-let current=object;
-while(current){
-if(current===target)return true;
-current=current.parent;
-}
-return false;
-}
-
-function focusOnObject(target){
-if(!target)return null;
-
-const box=new THREE.Box3().setFromObject(target);
-const center=box.getCenter(new THREE.Vector3());
-const size=box.getSize(new THREE.Vector3());
-const distance=Math.max(size.x,size.y,size.z)*4;
-
-return{
-position:new THREE.Vector3(center.x,center.y,center.z+distance),
-target:center.clone()
-};
-}
-
-function flyCameraTo(target){
-if(!target)return;
-
-const result=focusOnObject(target);
-if(!result)return;
-
-flyAnimation={
-startTime:performance.now(),
-duration:900,
-startPosition:camera.position.clone(),
-endPosition:result.position.clone(),
-startTarget:controls.target.clone(),
-endTarget:result.target.clone()
-};
-}
-
-renderer.domElement.addEventListener("click",function(event){
-if(!model)return;
-
-const rect=renderer.domElement.getBoundingClientRect();
-mouse.x=(event.clientX-rect.left)/rect.width*2-1;
-mouse.y=-((event.clientY-rect.top)/rect.height)*2+1;
-
-raycaster.setFromCamera(mouse,camera);
-
-const intersects=raycaster.intersectObject(model,true);
-if(!intersects.length)return;
-
-for(let i=0;i<intersects.length;i++){
-const hit=intersects[i];
-
-console.log("CLICK:",hit.object.name);
-
-if(pageState==="main"){
-if(button025&&isObjectOrChild(hit.object,button025)){
-flyCameraTo(menuTarget016);
-pageState="menu";
-backButton.style.display="block";
-return;
-}
-
-if(button026&&isObjectOrChild(hit.object,button026)){
-flyCameraTo(infoTarget017);
-pageState="info";
-backButton.style.display="block";
-return;
-}
-
-if(button027&&isObjectOrChild(hit.object,button027)){
-window.location.href="portfolio.html";
-return;
-}
-}
-}
-});
-
-backButton.addEventListener("click",function(){
-flyCameraHome();
-pageState="main";
-backButton.style.display="none";
-});
-
-function flyCameraHome(){
-if(!model)return;
-
-const box=new THREE.Box3().setFromObject(model);
-const center=box.getCenter(new THREE.Vector3());
-const size=box.getSize(new THREE.Vector3());
-const maxDimension=Math.max(size.x,size.y,size.z);
-const distance=maxDimension/Math.tan(THREE.MathUtils.degToRad(camera.fov/2));
-
-const homePosition=new THREE.Vector3(0,maxDimension*.2,distance*.8);
-
-flyAnimation={
-startTime:performance.now(),
-duration:900,
-startPosition:camera.position.clone(),
-endPosition:homePosition,
-startTarget:controls.target.clone(),
-endTarget:new THREE.Vector3(0,0,0)
-};
-}
-
-function animate(){
-requestAnimationFrame(animate);
-
-const time=clock.getElapsedTime();
-
-curtainShaders.forEach(function(shader){
-shader.uniforms.uTime.value=time;
-});
-
-if(flyAnimation){
-const elapsed=performance.now()-flyAnimation.startTime;
-let progress=elapsed/flyAnimation.duration;
-
-if(progress>=1)progress=1;
-
-const eased=1-Math.pow(1-progress,3);
-
-camera.position.lerpVectors(
-flyAnimation.startPosition,
-flyAnimation.endPosition,
-eased
-);
-
-controls.target.lerpVectors(
-flyAnimation.startTarget,
-flyAnimation.endTarget,
-eased
-);
-
-if(progress>=1){
-flyAnimation=null;
-}
-}
-
-controls.update();
-renderer.render(scene,camera);
-}
-
-animate();
-
-window.addEventListener("resize",function(){
-camera.aspect=window.innerWidth/window.innerHeight;
-camera.updateProjectionMatrix();
-renderer.setSize(window.innerWidth,window.innerHeight);
-});
-</script>
-</body>
-</html>
