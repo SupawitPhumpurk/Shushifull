@@ -1,4 +1,3 @@
-```html
 <!DOCTYPE html>
 <html lang="th">
 <head>
@@ -8,9 +7,12 @@
 <style>
 html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#1a1a1a}
 canvas{display:block}
+#backButton{display:none;position:fixed;top:25px;left:25px;z-index:10;padding:12px 22px;border:1px solid rgba(255,255,255,.35);border-radius:12px;background:rgba(0,0,0,.55);color:#fff;font-size:16px;font-family:Arial,sans-serif;cursor:pointer;backdrop-filter:blur(8px);transition:.25s}
+#backButton:hover{background:rgba(255,255,255,.18);transform:translateY(-2px)}
 </style>
 </head>
 <body>
+<button id="backButton">← กลับ</button>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
@@ -42,6 +44,8 @@ controls.mouseButtons.LEFT=THREE.MOUSE.ROTATE;
 controls.mouseButtons.RIGHT=THREE.MOUSE.PAN;
 controls.mouseButtons.MIDDLE=null;
 
+const backButton=document.getElementById("backButton");
+
 const gradientCanvas=document.createElement("canvas");
 gradientCanvas.width=4;
 gradientCanvas.height=1;
@@ -63,8 +67,6 @@ let model=null;
 let button025=null;
 let button026=null;
 let button027=null;
-let button030=null;
-let button028=null;
 let menuTarget016=null;
 let infoTarget017=null;
 let pageState="main";
@@ -93,7 +95,7 @@ node.receiveShadow=true;
 const originalMap=node.material&&node.material.map?node.material.map:null;
 const originalColor=node.material&&node.material.color?node.material.color.clone():new THREE.Color(0xffffff);
 
-if(["Plane025","Plane026","Plane027","Plane028","Plane030","Plane016","Plane017"].includes(node.name)&&node.material){
+if(["Plane025","Plane026","Plane027","Plane016","Plane017"].includes(node.name)&&node.material){
 node.material.side=THREE.DoubleSide;
 node.material.needsUpdate=true;
 }
@@ -127,7 +129,6 @@ shader.vertexShader=shader.vertexShader.replace("#include <begin_vertex>",`
 #include <begin_vertex>
 
 float t=uTime;
-
 float wave1=sin(position.y*4.0+t*2.0);
 float wave2=sin(position.x*6.0+t*2.8);
 float wave3=sin(position.x*12.0+t*4.0);
@@ -151,8 +152,6 @@ node.material.needsUpdate=true;
 if(node.name==="Plane025")button025=node;
 if(node.name==="Plane026")button026=node;
 if(node.name==="Plane027")button027=node;
-if(node.name==="Plane030")button030=node;
-if(node.name==="Plane028")button028=node;
 if(node.name==="Plane016")menuTarget016=node;
 if(node.name==="Plane017")infoTarget017=node;
 });
@@ -178,8 +177,6 @@ console.log("MODEL LOADED");
 console.log("Plane025:",button025);
 console.log("Plane026:",button026);
 console.log("Plane027:",button027);
-console.log("Plane028:",button028);
-console.log("Plane030:",button030);
 console.log("Plane016:",menuTarget016);
 console.log("Plane017:",infoTarget017);
 
@@ -234,7 +231,6 @@ renderer.domElement.addEventListener("click",function(event){
 if(!model)return;
 
 const rect=renderer.domElement.getBoundingClientRect();
-
 mouse.x=(event.clientX-rect.left)/rect.width*2-1;
 mouse.y=-((event.clientY-rect.top)/rect.height)*2+1;
 
@@ -252,12 +248,14 @@ if(pageState==="main"){
 if(button025&&isObjectOrChild(hit.object,button025)){
 flyCameraTo(menuTarget016);
 pageState="menu";
+backButton.style.display="block";
 return;
 }
 
 if(button026&&isObjectOrChild(hit.object,button026)){
 flyCameraTo(infoTarget017);
 pageState="info";
+backButton.style.display="block";
 return;
 }
 
@@ -266,23 +264,13 @@ window.location.href="portfolio.html";
 return;
 }
 }
+}
+});
 
-if(pageState==="menu"){
-if(button030&&isObjectOrChild(hit.object,button030)){
+backButton.addEventListener("click",function(){
 flyCameraHome();
 pageState="main";
-return;
-}
-}
-
-if(pageState==="info"){
-if(button028&&isObjectOrChild(hit.object,button028)){
-flyCameraHome();
-pageState="main";
-return;
-}
-}
-}
+backButton.style.display="none";
 });
 
 function flyCameraHome(){
@@ -294,11 +282,7 @@ const size=box.getSize(new THREE.Vector3());
 const maxDimension=Math.max(size.x,size.y,size.z);
 const distance=maxDimension/Math.tan(THREE.MathUtils.degToRad(camera.fov/2));
 
-const homePosition=new THREE.Vector3(
-0,
-maxDimension*.2,
-distance*.8
-);
+const homePosition=new THREE.Vector3(0,maxDimension*.2,distance*.8);
 
 flyAnimation={
 startTime:performance.now(),
@@ -358,4 +342,3 @@ renderer.setSize(window.innerWidth,window.innerHeight);
 </script>
 </body>
 </html>
-```
